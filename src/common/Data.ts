@@ -28,6 +28,7 @@ export interface KLineData {
   close: number
   volume?: number
   turnover?: number
+  color?: string
   [key: string]: unknown
 }
 

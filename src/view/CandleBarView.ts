@@ -59,7 +59,8 @@ export default class CandleBarView extends ChildrenView {
         const { x, data: { current, prev } } = visibleData
         if (isValid(current)) {
           const { open, high, low, close } = current
-          const color = current.color as string | undefined
+          const color = current.color
+          // console.log(current) // current就是 KLineData里的数据
 
           const comparePrice = styles.compareRule === 'current_open' ? open : (prev?.close ?? close)
           const colors: string[] = []
