@@ -59,21 +59,32 @@ export default class CandleBarView extends ChildrenView {
         const { x, data: { current, prev } } = visibleData
         if (isValid(current)) {
           const { open, high, low, close } = current
+          const color = current.color as string | undefined
+
           const comparePrice = styles.compareRule === 'current_open' ? open : (prev?.close ?? close)
           const colors: string[] = []
-          if (close > comparePrice) {
-            colors[0] = styles.upColor
-            colors[1] = styles.upBorderColor
-            colors[2] = styles.upWickColor
-          } else if (close < comparePrice) {
-            colors[0] = styles.downColor
-            colors[1] = styles.downBorderColor
-            colors[2] = styles.downWickColor
+
+          if (color != null) {
+            // ⭐️ 如果current里有自定义color，全部用这个color
+            colors[0] = color // 填充色
+            colors[1] = color // 边框色
+            colors[2] = color // 烛芯线色
           } else {
-            colors[0] = styles.noChangeColor
-            colors[1] = styles.noChangeBorderColor
-            colors[2] = styles.noChangeWickColor
+            if (close > comparePrice) {
+              colors[0] = styles.upColor
+              colors[1] = styles.upBorderColor
+              colors[2] = styles.upWickColor
+            } else if (close < comparePrice) {
+              colors[0] = styles.downColor
+              colors[1] = styles.downBorderColor
+              colors[2] = styles.downWickColor
+            } else {
+              colors[0] = styles.noChangeColor
+              colors[1] = styles.noChangeBorderColor
+              colors[2] = styles.noChangeWickColor
+            }
           }
+
           const openY = yAxis.convertToPixel(open)
           const closeY = yAxis.convertToPixel(close)
           const priceY = [
