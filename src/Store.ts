@@ -112,6 +112,7 @@ export interface Store {
   setBarSpace: (space: number) => void
   getBarSpace: () => BarSpace
   getVisibleRange: () => VisibleRange
+  test:() => void
   setLoadMoreDataCallback: (callback: LoadDataCallback) => void
   overrideIndicator: (override: IndicatorCreate) => boolean
   removeIndicator: (filter?: IndicatorFilter) => boolean
@@ -802,6 +803,10 @@ export default class StoreImp implements Store {
     return this._visibleRange
   }
 
+  test (): void {
+    console.log(this.getChart())
+  }
+
   startScroll (): void {
     this._startLastBarRightSideDiffBarCount = this._lastBarRightSideDiffBarCount
   }
@@ -1015,7 +1020,7 @@ export default class StoreImp implements Store {
           type: loadDataType,
           indicator
         })
-        indicator.calcImp(this._dataList).then(result => {
+        indicator.calcImp(this._dataList, this._dataList).then(result => {
           if (result) {
             this._chart.layout({
               measureWidth: true,

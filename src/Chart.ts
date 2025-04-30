@@ -677,6 +677,10 @@ export default class ChartImp implements Chart {
     return this._chartStore.getVisibleRange()
   }
 
+  test (): void {
+    this._chartStore.test()
+  }
+
   clearData (): void {
     this._chartStore.clearData()
   }

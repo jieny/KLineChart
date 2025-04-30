@@ -108,7 +108,7 @@ export interface IndicatorDrawParams<D, C, E> {
 
 export type IndicatorDrawCallback<D, C, E> = (params: IndicatorDrawParams<D, C, E>) => boolean
 
-export type IndicatorCalcCallback<D, C, E> = (dataList: KLineData[], indicator: Indicator<D, C, E>) => Promise<D[]> | D[]
+export type IndicatorCalcCallback<D, C, E> = (dataList: KLineData[], indicator: Indicator<D, C, E>, dataListForIndicator: KLineData[]) => Promise<D[]> | D[]
 
 export type IndicatorShouldUpdateCallback<D, C, E> = (prev: Indicator<D, C, E>, current: Indicator<D, C, E>) => (boolean | { calc: boolean, draw: boolean })
 
@@ -435,9 +435,9 @@ export default class IndicatorImp<D = unknown, C = unknown, E = unknown> impleme
     return { ...result, sort }
   }
 
-  async calcImp (dataList: KLineData[]): Promise<boolean> {
+  async calcImp (dataList: KLineData[], dataListForIndicator: KLineData[]): Promise<boolean> {
     try {
-      const result = await this.calc(dataList, this)
+      const result = await this.calc(dataList, this, dataListForIndicator)
       this.result = result
       return true
     } catch (e) {
