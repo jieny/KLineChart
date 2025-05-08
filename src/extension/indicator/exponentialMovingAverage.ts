@@ -36,8 +36,9 @@ const exponentialMovingAverage: IndicatorTemplate<Ema, number> = {
     { key: 'ema3', title: 'EMA20: ', type: 'line' }
   ],
   regenerateFigures: (params) => params.map((p, i) => ({ key: `ema${i + 1}`, title: `EMA${p}: `, type: 'line' })),
-  calc: (dataList, indicator) => {
+  calc: (dataList, indicator, dataListForIndicator) => {
     const { calcParams: params, figures } = indicator
+    console.log('dataListForIndicator test ', dataListForIndicator)
     let closeSum = 0
     const emaValues: number[] = []
     return dataList.map((kLineData, i) => {

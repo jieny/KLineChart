@@ -1028,7 +1028,7 @@ export default class StoreImp implements Store {
           type: loadDataType,
           indicator
         })
-        indicator.calcImp(this._dataList, this._dataList).then(result => {
+        indicator.calcImp(this._dataList, this._dataListForIndicator).then(result => {
           if (result) {
             this._chart.layout({
               measureWidth: true,
