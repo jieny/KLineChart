@@ -74,7 +74,7 @@ export interface Chart extends Store {
   id: string
   getDom: (paneId?: string, position?: DomPosition) => Nullable<HTMLElement>
   getSize: (paneId?: string, position?: DomPosition) => Nullable<Bounding>
-  applyNewData: (dataList: KLineData[], more?: boolean | Partial<LoadDataMore>) => void
+  applyNewData: (dataList: KLineData[], more?: boolean | Partial<LoadDataMore>, dataListForIndicator?: KLineData[]) => void
   updateData: (data: KLineData) => void
   createIndicator: (value: string | IndicatorCreate, isStack?: boolean, paneOptions?: PaneOptions) => Nullable<string>
   getIndicators: (filter?: IndicatorFilter) => Indicator[]
@@ -689,7 +689,7 @@ export default class ChartImp implements Chart {
     return this._chartStore.getDataList()
   }
 
-  applyNewData (data: KLineData[], more?: boolean | Partial<LoadDataMore>): void {
+  applyNewData (data: KLineData[], more?: boolean | Partial<LoadDataMore>, dataListForIndicator?: KLineData[]): void {
     this._drawPanes.forEach(pane => {
       (pane.getAxisComponent() as AxisImp).setAutoCalcTickFlag(true)
     })
@@ -700,7 +700,7 @@ export default class ChartImp implements Chart {
     } else {
       loadDataMore = { ...loadDataMore, ...more }
     }
-    this._chartStore.addData(data, 'init', loadDataMore)
+    this._chartStore.addData(data, 'init', loadDataMore, dataListForIndicator)
   }
 
   updateData (data: KLineData): void {

@@ -190,6 +190,8 @@ export default class StoreImp implements Store {
    */
   private _dataList: KLineData[] = []
 
+  private _dataListForIndicator: KLineData[] = []
+
   /**
    * Load more data callback
    */
@@ -495,11 +497,17 @@ export default class StoreImp implements Store {
   addData (
     data: KLineData | KLineData[],
     type: LoadDataType,
-    more?: { forward: boolean, backward: boolean }
+    more?: { forward: boolean, backward: boolean },
+    dataListForIndicator?: KLineData[]
   ): void {
     let success = false
     let adjustFlag = false
     let dataLengthChange = 0
+
+    if (dataListForIndicator != null) {
+      this._dataListForIndicator = dataListForIndicator
+    }
+
     if (isArray<KLineData>(data)) {
       dataLengthChange = data.length
       switch (type) {
@@ -804,7 +812,7 @@ export default class StoreImp implements Store {
   }
 
   test (): void {
-    console.log(this.getChart())
+    console.log(this._dataListForIndicator)
   }
 
   startScroll (): void {
