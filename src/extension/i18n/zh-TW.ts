@@ -14,26 +14,15 @@
 
 import type { Locales } from '../../Options'
 
-import zhCN from './zh-CN'
-import enUS from './en-US'
-import zhTW from './zh-TW'
-
-const locales: Record<string, Locales> = {
-  'zh-CN': zhCN,
-  'zh-TW': zhTW,
-  'en-US': enUS
+const zhTW: Locales = {
+  time: '時間：',
+  open: '開：',
+  high: '高：',
+  low: '低：',
+  close: '收：',
+  volume: '成交量：',
+  turnover: '成交額：',
+  change: '漲幅：'
 }
 
-function registerLocale (locale: string, ls: Locales): void {
-  locales[locale] = { ...locales[locale], ...ls }
-}
-
-function getSupportedLocales (): string[] {
-  return Object.keys(locales)
-}
-
-function i18n (key: string, locale: string): string {
-  return locales[locale][key] ?? key
-}
-
-export { i18n, registerLocale, getSupportedLocales }
+export default zhTW
