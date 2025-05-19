@@ -13,7 +13,7 @@
  */
 import type Coordinate from '../../common/Coordinate'
 import type Bounding from '../../common/Bounding'
-import { getLinearYFromCoordinates } from '../figure/line'
+import { getLinearSlopeIntercept, getLinearYFromCoordinates } from '../figure/line'
 import type { LineAttrs } from '../figure/line'
 
 export function getRotateCoordinate (coordinate: Coordinate, targetCoordinate: Coordinate, angle: number): Coordinate {
@@ -58,4 +58,37 @@ export function getDistance (coordinate1: Coordinate, coordinate2: Coordinate): 
   const xDis = Math.abs(coordinate1.x - coordinate2.x)
   const yDis = Math.abs(coordinate1.y - coordinate2.y)
   return Math.sqrt(xDis * xDis + yDis * yDis)
+}
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- ignore
+export function getArrowLine (point1: Coordinate, point2: Coordinate) {
+  const flag = point2.x > point1.x ? 0 : 1
+  const kb = getLinearSlopeIntercept(point1, point2)
+  // eslint-disable-next-line @typescript-eslint/init-declarations -- ignore
+  let offsetAngle
+  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions -- ignore
+  if (kb) {
+    offsetAngle = Math.atan(kb[0]) + Math.PI * flag
+  } else {
+    if (point2.y > point1.y) {
+      offsetAngle = Math.PI / 2
+    } else {
+      offsetAngle = Math.PI / 2 * 3
+    }
+  }
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- ignore
+  const rotateCoordinate1 = getRotateCoordinate({ x: point2.x - 8, y: point2.y + 4 }, point2, offsetAngle)
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- ignore
+  const rotateCoordinate2 = getRotateCoordinate({ x: point2.x - 8, y: point2.y - 4 }, point2, offsetAngle)
+  return [
+    {
+      type: 'line',
+      attrs: { coordinates: [point1, point2] }
+    },
+    {
+      type: 'line',
+      ignoreEvent: true,
+      attrs: { coordinates: [rotateCoordinate1, point2, rotateCoordinate2] }
+    }
+  ]
 }
