@@ -32,6 +32,22 @@ import verticalStraightLine from './verticalStraightLine'
 
 import simpleAnnotation from './simpleAnnotation'
 import simpleTag from './simpleTag'
+import abcd from './abcd'
+import anyWaves from './anyWaves'
+import arrow from './arrow'
+import circle from './circle'
+import eightWaves from './eightWaves'
+import fibonacciCircle from './fibonacciCircle'
+import fibonacciExtension from './fibonacciExtension'
+import fibonacciSpeedResistanceFan from './fibonacciSpeedResistanceFan'
+import fibonacciSpiral from './fibonacciSpiral'
+import fiveWaves from './fiveWaves'
+import gannBox from './gannBox'
+import parallelogram from './parallelogram'
+import rect from './rect'
+import threeWaves from './threeWaves'
+import triangle from './triangle'
+import xabcd from './xabcd'
 
 const overlays: Record<string, OverlayInnerConstructor> = {}
 
@@ -39,7 +55,9 @@ const extensions = [
   fibonacciLine, horizontalRayLine, horizontalSegment, horizontalStraightLine,
   parallelStraightLine, priceChannelLine, priceLine, rayLine, segment,
   straightLine, verticalRayLine, verticalSegment, verticalStraightLine,
-  simpleAnnotation, simpleTag
+  simpleAnnotation, simpleTag, abcd, anyWaves, arrow, circle, eightWaves,
+  fibonacciCircle, fibonacciExtension, fibonacciSpeedResistanceFan, fibonacciSpiral,
+  fiveWaves, gannBox, parallelogram, rect, threeWaves, triangle, xabcd
 ]
 
 extensions.forEach((template: OverlayTemplate) => {

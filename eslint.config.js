@@ -29,6 +29,14 @@ export default [
       '@typescript-eslint/max-params': 'off',
       '@typescript-eslint/no-magic-numbers': 'off',
       '@typescript-eslint/prefer-destructuring': 'off'
+      // 'eslint-comments/require-description': 'off',
+      // '@typescript-eslint/no-unsafe-argument': 'off',
+      // '@typescript-eslint/strict-boolean-expressions': 'off',
+      // '@typescript-eslint/init-declarations': 'off',
+      // '@typescript-eslint/no-unsafe-member-access': 'off',
+      // '@typescript-eslint/ban-ts-comment': 'off',
+      // '@typescript-eslint/no-unsafe-assignment': 'off',
+      // '@ts-expect-error': 'off'
     }
   }
 ]
