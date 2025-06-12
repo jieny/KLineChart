@@ -19,7 +19,7 @@ import type Point from '../common/Point'
 import type Coordinate from '../common/Coordinate'
 import type Bounding from '../common/Bounding'
 import type { OverlayStyle } from '../common/Styles'
-import type { MouseTouchEvent } from '../common/SyntheticEvent'
+import type { MouseTouchEvent } from '../common/EventHandler'
 import { clone, isArray, isBoolean, isFunction, isNumber, isString, isValid, merge } from '../common/utils/typeChecks'
 
 import type { XAxis } from './XAxis'
@@ -341,7 +341,7 @@ export default class OverlayImp<E = unknown> implements Overlay<E> {
   shouldUpdate (): { draw: boolean, sort: boolean } {
     const sort = this._prevOverlay.zLevel !== this.zLevel
     const draw = sort ||
-      JSON.stringify(this._prevOverlay) !== JSON.stringify(this.points) ||
+      JSON.stringify(this._prevOverlay.points) !== JSON.stringify(this.points) ||
       this._prevOverlay.visible !== this.visible ||
       this._prevOverlay.extendData !== this.extendData ||
       this._prevOverlay.styles !== this.styles

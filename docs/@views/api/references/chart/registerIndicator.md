@@ -51,7 +51,7 @@
          activeColor?: string
          backgroundColor?: string
          activeBackgroundColor?: string
-         type?: 'path' | 'iconFont'
+         type?: 'path' | 'icon_font'
          path?: {
            style?: 'stroke' | 'fill'
            path?: string
@@ -76,7 +76,6 @@
       }>
     })
     draw?: (params: object) => boolean
-    onClick?: (params: object) => void
     onDataStateChange?: (params: object) => void
   }
 ) => void

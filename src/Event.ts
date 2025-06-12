@@ -13,7 +13,7 @@
  */
 
 import type Nullable from './common/Nullable'
-import SyntheticEvent, { type EventHandler, type MouseTouchEvent, TOUCH_MIN_RADIUS } from './common/SyntheticEvent'
+import EventHandlerImp, { type EventHandler, type MouseTouchEvent, TOUCH_MIN_RADIUS } from './common/EventHandler'
 import type Coordinate from './common/Coordinate'
 import { UpdateLevel } from './common/Updater'
 import type Crosshair from './common/Crosshair'
@@ -39,7 +39,7 @@ interface EventTriggerWidgetInfo {
 export default class Event implements EventHandler {
   private readonly _container: HTMLElement
   private readonly _chart: Chart
-  private readonly _event: SyntheticEvent
+  private readonly _event: EventHandlerImp
 
   // 惯性滚动开始时间
   private _flingStartTime = new Date().getTime()
@@ -101,7 +101,7 @@ export default class Event implements EventHandler {
   constructor (container: HTMLElement, chart: Chart) {
     this._container = container
     this._chart = chart
-    this._event = new SyntheticEvent(container, this, {
+    this._event = new EventHandlerImp(container, this, {
       treatVertDragAsPageScroll: () => false,
       treatHorzDragAsPageScroll: () => false
     })
@@ -645,7 +645,8 @@ export default class Event implements EventHandler {
     const { x, y } = event
     const separatorPanes = this._chart.getSeparatorPanes()
     const separatorSize = this._chart.getStyles().separator.size
-    for (const [, pane] of separatorPanes) {
+    for (const items of separatorPanes) {
+      const pane = items[1]
       const bounding = pane.getBounding()
       const top = bounding.top - Math.round((REAL_SEPARATOR_HEIGHT - separatorSize) / 2)
       if (

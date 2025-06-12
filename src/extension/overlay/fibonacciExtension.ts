@@ -35,10 +35,10 @@ const fibonacciExtension: OverlayTemplate = {
       const textX = coordinates[2].x > coordinates[1].x ? coordinates[1].x : coordinates[2].x
       percents.forEach(percent => {
         const y = coordinates[2].y + yDif * percent
-        const precision = chart.getPrecision()
+        const precision = chart.getSymbol()?.pricePrecision ?? 2
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- ignore
         // @ts-expect-error
-        const price = (points[2].value + valueDif * percent).toFixed(precision.price)
+        const price = (points[2].value + valueDif * percent).toFixed(precision)
         fbLines.push({ coordinates: [{ x: coordinates[1].x, y }, { x: coordinates[2].x, y }] })
         texts.push({
           x: textX,

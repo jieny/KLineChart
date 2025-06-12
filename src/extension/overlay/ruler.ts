@@ -61,7 +61,7 @@ const ruler: OverlayTemplate = {
     return true
   },
   createPointFigures: ({ chart, coordinates, overlay }) => {
-    const precision = chart.getPrecision()
+    const precision = chart.getSymbol()?.pricePrecision ?? 2
     // const precision = getPrecision(chart, overlay, yAxis)
     if (coordinates.length > 1) {
       const pt1 = coordinates[0]
@@ -86,8 +86,7 @@ const ruler: OverlayTemplate = {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- ignore
       // @ts-expect-error
       const valueDif = points[0].value - points[1].value
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- ignore
-      // @ts-expect-error
+
       const priceChg = valueDif.toFixed(precision)
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- ignore
       // @ts-expect-error
