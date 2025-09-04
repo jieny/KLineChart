@@ -1,7 +1,17 @@
 # 📠 更新日志
 
-## 10.0.0-alpha6
-`2025-06-12`
+## 10.0.0-alpha9
+`2025-09-02`
++ 👉 指标方法 `calc` 返回值由数组变更为以时间戳为key的对象。
++ 💄 优化指标计算任务执行。
++ 🐞 修复实例api `setSymbol` ， `setPeriod` 和 `setDataLoader` 不重置Y轴问题。
+
+## 10.0.0-alpha8
+`2025-06-14`
++ 🐞 修复 typescript 引用错误。
+
+## 10.0.0-alpha7
+`2025-06-14`
 + 👉 图表api `init(ds, options)` 中的 `options.customApi` 变更为 `options.formatter` ， `formatDate` 参数变更为对象。
 + 👉 实例api `setCustomApi` 变更为 `setFormatter` ， `getCustomApi` 变更为 `getFormatter`。
 + 🆕 样式配置新增 `candle.priceMark.last.extendTexts` ， `candle.tooltip.title` ， `candle.tooltip.legend` ， `indicator.tooltip.title` ， `indicator.tooltip.legend` ， 和 `crosshair.horizontal.features` 。
@@ -13,6 +23,10 @@
 + 🐞 修复样式配置 `candle.type` 是 `ohlc` 时的显示问题。
 + 💄 优化覆盖物事件默认事件响应。
 + 💄 优化x轴显示。
+
+## 10.0.0-alpha6
+`2025-06-12`
++ 错误发布
 
 ## 10.0.0-alpha5
 `2025-03-09`

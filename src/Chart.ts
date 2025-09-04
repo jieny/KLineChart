@@ -13,6 +13,8 @@
  */
 
 import type Nullable from './common/Nullable'
+import type DeepPartial from './common/DeepPartial'
+import type PickPartial from './common/PickPartial'
 import type Bounding from './common/Bounding'
 import { createDefaultBounding } from './common/Bounding'
 import type { KLineData } from './common/Data'
@@ -25,13 +27,17 @@ import type { DataLoader } from './common/DataLoader'
 import type VisibleRange from './common/VisibleRange'
 import type { Formatter, DecimalFold, LayoutChild, Options, ThousandsSeparator } from './Options'
 import Animation from './common/Animation'
-
 import { createId } from './common/utils/id'
 import { createDom } from './common/utils/dom'
 import { getPixelRatio } from './common/utils/canvas'
 import { isString, isArray, isValid, merge, isNumber } from './common/utils/typeChecks'
 import { logWarn } from './common/utils/logger'
 import { binarySearchNearest } from './common/utils/number'
+import type { Styles } from './common/Styles'
+import type BarSpace from './common/BarSpace'
+import type PickRequired from './common/PickRequired'
+import type { SymbolInfo } from './common/SymbolInfo'
+import type { Period } from './common/Period'
 
 import ChartStore, { SCALE_MULTIPLIER, type Store } from './Store'
 
@@ -52,12 +58,6 @@ import type { OverlayFilter, Overlay, OverlayCreate, OverlayOverride } from './c
 import { getIndicatorClass } from './extension/indicator/index'
 
 import Event from './Event'
-import type DeepPartial from './common/DeepPartial'
-import type { Styles } from './common/Styles'
-import type BarSpace from './common/BarSpace'
-import type PickRequired from './common/PickRequired'
-import type SymbolInfo from './common/SymbolInfo'
-import type { Period } from './common/Period'
 
 export type DomPosition = 'root' | 'main' | 'yAxis'
 
@@ -505,28 +505,6 @@ export default class ChartImp implements Chart {
     }
   }
 
-  crosshairChange (crosshair: Crosshair): void {
-    if (this._chartStore.hasAction('onCrosshairChange')) {
-      const indicatorData = {}
-      this._drawPanes.forEach(pane => {
-        const id = pane.getId()
-        const paneIndicatorData = {}
-        const indicators = this._chartStore.getIndicatorsByPaneId(id)
-        indicators.forEach(indicator => {
-          const result = indicator.result
-          paneIndicatorData[indicator.name] = result[crosshair.dataIndex ?? result.length - 1]
-        })
-        indicatorData[id] = paneIndicatorData
-      })
-      if (isString(crosshair.paneId)) {
-        this._chartStore.executeAction('onCrosshairChange', {
-          crosshair,
-          indicatorData
-        })
-      }
-    }
-  }
-
   getDom (paneId?: string, position?: DomPosition): Nullable<HTMLElement> {
     if (isValid(paneId)) {
       const pane = this.getDrawPaneById(paneId)
@@ -573,8 +551,17 @@ export default class ChartImp implements Chart {
     return null
   }
 
-  setSymbol (symbol: SymbolInfo): void {
-    this._chartStore.setSymbol(symbol)
+  private _resetYAxisAutoCalcTickFlag (): void {
+    this._drawPanes.forEach(pane => {
+      (pane.getAxisComponent() as AxisImp).setAutoCalcTickFlag(true)
+    })
+  }
+
+  setSymbol (symbol: PickPartial<SymbolInfo, 'pricePrecision' | 'volumePrecision'>): void {
+    if (symbol !== this.getSymbol()) {
+      this._resetYAxisAutoCalcTickFlag()
+      this._chartStore.setSymbol(symbol)
+    }
   }
 
   getSymbol (): Nullable<SymbolInfo> {
@@ -582,7 +569,10 @@ export default class ChartImp implements Chart {
   }
 
   setPeriod (period: Period): void {
-    this._chartStore.setPeriod(period)
+    if (period !== this.getPeriod()) {
+      this._resetYAxisAutoCalcTickFlag()
+      this._chartStore.setPeriod(period)
+    }
   }
 
   getPeriod (): Nullable<Period> {
@@ -713,6 +703,7 @@ export default class ChartImp implements Chart {
   }
 
   setDataLoader (dataLoader: DataLoader): void {
+    this._resetYAxisAutoCalcTickFlag()
     this._chartStore.setDataLoader(dataLoader)
   }
 

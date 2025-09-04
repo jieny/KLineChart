@@ -13,6 +13,7 @@
  */
 
 import type Nullable from './common/Nullable'
+import type PickPartial from './common/PickPartial'
 import type DeepPartial from './common/DeepPartial'
 import type PickRequired from './common/PickRequired'
 import type { KLineData, VisibleRangeData } from './common/Data'
@@ -22,8 +23,8 @@ import { getDefaultVisibleRange } from './common/VisibleRange'
 import TaskScheduler, { generateTaskId } from './common/TaskScheduler'
 import type Crosshair from './common/Crosshair'
 import type BarSpace from './common/BarSpace'
-import type SymbolInfo from './common/SymbolInfo'
 import type { Period } from './common/Period'
+import { SymbolDefaultPrecisionConstants, type SymbolInfo } from './common/SymbolInfo'
 
 import Action from './common/Action'
 import type { ActionType, ActionCallback } from './common/Action'
@@ -100,7 +101,7 @@ export interface Store {
   getThousandsSeparator: () => ThousandsSeparator
   setDecimalFold: (decimalFold: Partial<DecimalFold>) => void
   getDecimalFold: () => DecimalFold
-  setSymbol: (symbol: SymbolInfo) => void
+  setSymbol: (symbol: PickPartial<SymbolInfo, 'pricePrecision' | 'volumePrecision'>) => void
   getSymbol: () => Nullable<SymbolInfo>
   setPeriod: (period: Period) => void
   getPeriod: () => Nullable<Period>
@@ -473,11 +474,18 @@ export default class StoreImp implements Store {
 
   getDecimalFold (): DecimalFold { return this._decimalFold }
 
-  setSymbol (symbol: SymbolInfo): void {
-    this._processDataUnsubscribe()
-    this._symbol = symbol
-    this._synchronizeIndicatorSeriesPrecision()
-    this.resetData()
+  setSymbol (symbol: PickPartial<SymbolInfo, 'pricePrecision' | 'volumePrecision'>): void {
+    this.resetData(() => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- ignore
+      // @ts-expect-error
+      this._symbol = {
+        pricePrecision: SymbolDefaultPrecisionConstants.PRICE,
+        volumePrecision: SymbolDefaultPrecisionConstants.VOLUME,
+        ...this._symbol,
+        ...symbol
+      }
+      this._synchronizeIndicatorSeriesPrecision()
+    })
   }
 
   getSymbol (): Nullable<SymbolInfo> {
@@ -485,9 +493,9 @@ export default class StoreImp implements Store {
   }
 
   setPeriod (period: Period): void {
-    this._processDataUnsubscribe()
-    this._period = period
-    this.resetData()
+    this.resetData(() => {
+      this._period = period
+    })
   }
 
   getPeriod (): Nullable<Period> {
@@ -597,8 +605,9 @@ export default class StoreImp implements Store {
   }
 
   setDataLoader (dataLoader: DataLoader): void {
-    this._dataLoader = dataLoader
-    this.resetData()
+    this.resetData(() => {
+      this._dataLoader = dataLoader
+    })
   }
 
   private _calcOptimalBarSpace (): void {
@@ -739,7 +748,9 @@ export default class StoreImp implements Store {
     }
   }
 
-  resetData (): void {
+  resetData (fn?: () => void): void {
+    this._processDataUnsubscribe()
+    fn?.()
     this._loading = false
     this._processDataLoad('init')
   }
@@ -1076,8 +1087,8 @@ export default class StoreImp implements Store {
       prevCrosshair.paneId !== cr.paneId ||
       (forceInvalidate ?? false)
     ) {
-      if (isValid(kLineData) && !(notExecuteAction ?? false)) {
-        this._chart.crosshairChange(this._crosshair)
+      if (isValid(kLineData) && !(notExecuteAction ?? false) && this.hasAction('onCrosshairChange') && isString(this._crosshair.paneId)) {
+        this.executeAction('onCrosshairChange', crosshair)
       }
       if (!(notInvalidate ?? false)) {
         this._chart.updatePane(UpdateLevel.Overlay)
@@ -1126,34 +1137,34 @@ export default class StoreImp implements Store {
   }
 
   private _addIndicatorCalcTask (indicator: IndicatorImp, dataLoadType: DataLoadType): void {
-    this._taskScheduler.addTask({
+    indicator.onDataStateChange?.({
+      state: 'loading',
+      type: dataLoadType,
+      indicator
+    })
+    void this._taskScheduler.add<boolean>({
       id: generateTaskId(indicator.id),
-      handler: () => {
+      handler: async () => await indicator.calcImp(this._dataList, this._dataListForIndicator).then(result => result)
+    }).then(result => {
+      if (result) {
+        this._chart.layout({
+          measureWidth: true,
+          update: true,
+          buildYAxisTick: true,
+          cacheYAxisWidth: dataLoadType !== 'init'
+        })
         indicator.onDataStateChange?.({
-          state: 'loading',
+          state: 'ready',
           type: dataLoadType,
           indicator
         })
-        indicator.calcImp(this._dataList, this._dataListForIndicator).then(result => {
-          if (result) {
-            this._chart.layout({
-              measureWidth: true,
-              update: true,
-              buildYAxisTick: true,
-              cacheYAxisWidth: dataLoadType !== 'init'
-            })
-            indicator.onDataStateChange?.({
-              state: 'ready',
-              type: dataLoadType,
-              indicator
-            })
-          }
-        }).catch(() => {
-          indicator.onDataStateChange?.({
-            state: 'error',
-            type: dataLoadType,
-            indicator
-          })
+      }
+    }).catch((e: unknown) => {
+      if (e !== 'canceled') {
+        indicator.onDataStateChange?.({
+          state: 'error',
+          type: dataLoadType,
+          indicator
         })
       }
     })
@@ -1213,7 +1224,7 @@ export default class StoreImp implements Store {
       const paneIndicators = this.getIndicatorsByPaneId(indicator.paneId)
       const index = paneIndicators.findIndex(ins => ins.id === indicator.id)
       if (index > -1) {
-        this._taskScheduler.removeTask(generateTaskId(indicator.id))
+        this._taskScheduler.remove(generateTaskId(indicator.id))
         paneIndicators.splice(index, 1)
         removed = true
       }
@@ -1230,7 +1241,10 @@ export default class StoreImp implements Store {
 
   private _synchronizeIndicatorSeriesPrecision (indicator?: IndicatorImp): void {
     if (isValid(this._symbol)) {
-      const { pricePrecision = 2, volumePrecision = 0 } = this._symbol
+      const {
+        pricePrecision = SymbolDefaultPrecisionConstants.PRICE,
+        volumePrecision = SymbolDefaultPrecisionConstants.VOLUME
+      } = this._symbol
       const synchronize: ((indicator: IndicatorImp) => void) = indicator => {
         switch (indicator.series) {
           case 'price': {
@@ -1602,7 +1616,7 @@ export default class StoreImp implements Store {
   destroy (): void {
     this._clearData()
     this._clearLastPriceMarkExtendTextUpdateTimer()
-    this._taskScheduler.removeTask()
+    this._taskScheduler.clear()
     this._overlays.clear()
     this._indicators.clear()
     this._actions.clear()

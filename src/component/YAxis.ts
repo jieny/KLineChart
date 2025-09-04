@@ -17,6 +17,7 @@ import { isFunction, isNumber, isString, isValid, merge } from '../common/utils/
 import { index10, getPrecision, nice, round } from '../common/utils/number'
 import { calcTextWidth } from '../common/utils/canvas'
 import { formatPrecision } from '../common/utils/format'
+import { SymbolDefaultPrecisionConstants } from '../common/SymbolInfo'
 
 import AxisImp, {
   type AxisTemplate, type Axis, type AxisRange,
@@ -102,7 +103,7 @@ export default abstract class YAxisImp extends AxisImp implements YAxis {
     let precision = 4
     const inCandle = this.isInCandle()
     if (inCandle) {
-      const pricePrecision = chartStore.getSymbol()?.pricePrecision ?? 2
+      const pricePrecision = chartStore.getSymbol()?.pricePrecision ?? SymbolDefaultPrecisionConstants.PRICE
       if (indicatorPrecision !== Number.MAX_SAFE_INTEGER) {
         precision = Math.min(indicatorPrecision, pricePrecision)
       } else {
@@ -119,32 +120,31 @@ export default abstract class YAxisImp extends AxisImp implements YAxis {
     const areaValueKey = candleStyles.area.value
     const shouldCompareHighLow = (inCandle && !isArea) || (!inCandle && shouldOhlc)
     visibleRangeDataList.forEach((visibleData) => {
-      const dataIndex = visibleData.dataIndex
-      const data = visibleData.data.current
-      if (isValid(data)) {
+      const kLineData = visibleData.data.current
+      if (isValid(kLineData)) {
         if (shouldCompareHighLow) {
-          min = Math.min(min, data.low)
-          max = Math.max(max, data.high)
+          min = Math.min(min, kLineData.low)
+          max = Math.max(max, kLineData.high)
         }
         if (inCandle && isArea) {
-          const value = data[areaValueKey]
+          const value = kLineData[areaValueKey]
           if (isNumber(value)) {
             min = Math.min(min, value)
             max = Math.max(max, value)
           }
         }
-      }
-      indicators.forEach(({ result, figures }) => {
-        const data = result[dataIndex] ?? {}
-        figures.forEach(figure => {
+        indicators.forEach(({ result, figures }) => {
+          const data = result[kLineData.timestamp] ?? {}
+          figures.forEach(figure => {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- ignore
-          const value = data[figure.key]
-          if (isNumber(value)) {
-            min = Math.min(min, value)
-            max = Math.max(max, value)
-          }
+            const value = data[figure.key]
+            if (isNumber(value)) {
+              min = Math.min(min, value)
+              max = Math.max(max, value)
+            }
+          })
         })
-      })
+      }
     })
 
     if (min !== Number.MAX_SAFE_INTEGER && max !== Number.MIN_SAFE_INTEGER) {
@@ -269,7 +269,7 @@ export default abstract class YAxisImp extends AxisImp implements YAxis {
     let precision = 0
     let shouldFormatBigNumber = false
     if (this.isInCandle()) {
-      precision = chartStore.getSymbol()?.pricePrecision ?? 2
+      precision = chartStore.getSymbol()?.pricePrecision ?? SymbolDefaultPrecisionConstants.PRICE
     } else {
       indicators.forEach(indicator => {
         precision = Math.max(precision, indicator.precision)
@@ -348,7 +348,7 @@ export default abstract class YAxisImp extends AxisImp implements YAxis {
     let crosshairHorizontalTextWidth = 0
 
     if (lastPriceMarkTextVisible || crosshairHorizontalTextVisible) {
-      const pricePrecision = chartStore.getSymbol()?.pricePrecision ?? 2
+      const pricePrecision = chartStore.getSymbol()?.pricePrecision ?? SymbolDefaultPrecisionConstants.PRICE
       const max = this.getRange().displayTo
 
       if (lastPriceMarkTextVisible) {
