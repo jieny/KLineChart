@@ -20,7 +20,7 @@ import type { KLineData, VisibleRangeData } from './common/Data'
 import type VisibleRange from './common/VisibleRange'
 import type Coordinate from './common/Coordinate'
 import { getDefaultVisibleRange } from './common/VisibleRange'
-import TaskScheduler, { generateTaskId } from './common/TaskScheduler'
+import TaskScheduler from './common/TaskScheduler'
 import type Crosshair from './common/Crosshair'
 import type BarSpace from './common/BarSpace'
 import type { Period } from './common/Period'
@@ -37,7 +37,7 @@ import { logWarn } from './common/utils/logger'
 import { UpdateLevel } from './common/Updater'
 import type { DataLoader, DataLoaderGetBarsParams, DataLoadMore, DataLoadType } from './common/DataLoader'
 
-import type { Options, Formatter, ThousandsSeparator, DecimalFold, FormatDateType, FormatDateParams, FormatBigNumber, FormatExtendText, FormatExtendTextParams } from './Options'
+import type { Options, Formatter, ThousandsSeparator, DecimalFold, FormatDateType, FormatDateParams, FormatBigNumber, FormatExtendText, FormatExtendTextParams, ZoomAnchor, ZoomAnchorType } from './Options'
 
 import type { IndicatorOverride, IndicatorCreate, IndicatorFilter } from './component/Indicator'
 import type IndicatorImp from './component/Indicator'
@@ -123,6 +123,8 @@ export interface Store {
   removeOverlay: (filter?: OverlayFilter) => boolean
   setZoomEnabled: (enabled: boolean) => void
   isZoomEnabled: () => boolean
+  setZoomAnchor: (behavior: ZoomAnchor) => void
+  getZoomAnchor: () => ZoomAnchor
   setScrollEnabled: (enabled: boolean) => void
   isScrollEnabled: () => boolean
   resetData: () => void
@@ -226,6 +228,14 @@ export default class StoreImp implements Store {
   private _zoomEnabled = true
 
   /**
+   * Zoom anchor point flag
+   */
+  private readonly _zoomAnchor: ZoomAnchor = {
+    main: 'cursor',
+    xAxis: 'cursor'
+  }
+
+  /**
    * Scroll enabled flag
    */
   private _scrollEnabled = true
@@ -311,7 +321,7 @@ export default class StoreImp implements Store {
   /**
    * Task scheduler
    */
-  private readonly _taskScheduler = new TaskScheduler()
+  private readonly _taskScheduler: TaskScheduler
 
   /**
    * Overlay
@@ -362,7 +372,7 @@ export default class StoreImp implements Store {
     this._chart = chart
     this._calcOptimalBarSpace()
     this._lastBarRightSideDiffBarCount = this._offsetRightDistance / this._barSpace
-    const { styles, locale, timezone, formatter, thousandsSeparator, decimalFold } = options ?? {}
+    const { styles, locale, timezone, formatter, thousandsSeparator, decimalFold, zoomAnchor } = options ?? {}
     if (isValid(styles)) {
       this.setStyles(styles)
     }
@@ -379,6 +389,18 @@ export default class StoreImp implements Store {
     if (isValid(decimalFold)) {
       this.setDecimalFold(decimalFold)
     }
+
+    if (isValid(zoomAnchor)) {
+      this.setZoomAnchor(zoomAnchor)
+    }
+
+    this._taskScheduler = new TaskScheduler(() => {
+      this._chart.layout({
+        measureWidth: true,
+        update: true,
+        buildYAxisTick: true
+      })
+    })
   }
 
   setStyles (value: string | DeepPartial<Styles>): void {
@@ -586,14 +608,13 @@ export default class StoreImp implements Store {
         adjustFlag = true
       }
     }
-    if (success) {
-      if (adjustFlag) {
-        this._adjustVisibleRange()
-        this.setCrosshair(this._crosshair, { notInvalidate: true })
-        const filterIndicators = this.getIndicatorsByFilter({})
-        filterIndicators.forEach(indicator => {
-          this._addIndicatorCalcTask(indicator, type)
-        })
+    if (success && adjustFlag) {
+      this._adjustVisibleRange()
+      this.setCrosshair(this._crosshair, { notInvalidate: true })
+      const filterIndicators = this.getIndicatorsByFilter({})
+      if (filterIndicators.length > 0) {
+        this._calcIndicator(filterIndicators)
+      } else {
         this._chart.layout({
           measureWidth: true,
           update: true,
@@ -708,7 +729,7 @@ export default class StoreImp implements Store {
         symbol: this._symbol,
         period: this._period,
         timestamp: null,
-        callback: (data: KLineData[], more?: boolean) => {
+        callback: (data: KLineData[], more?: DataLoadMore) => {
           this._loading = false
           this._addData(data, type, more)
           if (type === 'init') {
@@ -1019,13 +1040,20 @@ export default class StoreImp implements Store {
     return Math.ceil(this.coordinateToFloatIndex(x)) - 1
   }
 
-  zoom (scale: number, coordinate?: Partial<Coordinate>): void {
+  zoom (scale: number, coordinate: Nullable<Partial<Coordinate>>, position: 'main' | 'xAxis'): void {
     if (!this._zoomEnabled) {
       return
     }
-    let zoomCoordinate: Nullable<Partial<Coordinate>> = coordinate ?? null
-    if (!isNumber(zoomCoordinate?.x)) {
-      zoomCoordinate = { x: this._crosshair.x ?? this._totalBarSpace / 2 }
+    const zoomCoordinate: Partial<Coordinate> = coordinate ?? { x: this._crosshair.x ?? this._totalBarSpace / 2 }
+
+    if (position === 'xAxis') {
+      if (this._zoomAnchor.xAxis === 'last_bar') {
+        zoomCoordinate.x = this.dataIndexToCoordinate(this._dataList.length - 1)
+      }
+    } else {
+      if (this._zoomAnchor.main === 'last_bar') {
+        zoomCoordinate.x = this.dataIndexToCoordinate(this._dataList.length - 1)
+      }
     }
     const x = zoomCoordinate.x!
     const floatIndex = this.coordinateToFloatIndex(x)
@@ -1046,6 +1074,24 @@ export default class StoreImp implements Store {
 
   isZoomEnabled (): boolean {
     return this._zoomEnabled
+  }
+
+  setZoomAnchor (anchor: ZoomAnchorType | Partial<ZoomAnchor>): void {
+    if (isString(anchor)) {
+      this._zoomAnchor.main = anchor
+      this._zoomAnchor.xAxis = anchor
+    } else {
+      if (isString(anchor.main)) {
+        this._zoomAnchor.main = anchor.main
+      }
+      if (isString(anchor.xAxis)) {
+        this._zoomAnchor.xAxis = anchor.xAxis
+      }
+    }
+  }
+
+  getZoomAnchor (): ZoomAnchor {
+    return { ...this._zoomAnchor }
   }
 
   setScrollEnabled (enabled: boolean): void {
@@ -1136,38 +1182,16 @@ export default class StoreImp implements Store {
     }
   }
 
-  private _addIndicatorCalcTask (indicator: IndicatorImp, dataLoadType: DataLoadType): void {
-    indicator.onDataStateChange?.({
-      state: 'loading',
-      type: dataLoadType,
-      indicator
-    })
-    void this._taskScheduler.add<boolean>({
-      id: generateTaskId(indicator.id),
-      handler: async () => await indicator.calcImp(this._dataList, this._dataListForIndicator).then(result => result)
-    }).then(result => {
-      if (result) {
-        this._chart.layout({
-          measureWidth: true,
-          update: true,
-          buildYAxisTick: true,
-          cacheYAxisWidth: dataLoadType !== 'init'
-        })
-        indicator.onDataStateChange?.({
-          state: 'ready',
-          type: dataLoadType,
-          indicator
-        })
-      }
-    }).catch((e: unknown) => {
-      if (e !== 'canceled') {
-        indicator.onDataStateChange?.({
-          state: 'error',
-          type: dataLoadType,
-          indicator
-        })
-      }
-    })
+  private _calcIndicator (data: IndicatorImp | IndicatorImp[]): void {
+    let indicators: IndicatorImp[] = []
+    indicators = indicators.concat(data)
+    if (indicators.length > 0) {
+      const tasks: Record<string, Promise<unknown>> = {}
+      indicators.forEach(indicator => {
+        tasks[indicator.id] = indicator.calcImp(this._dataList,this._dataListForIndicator)
+      })
+      this._taskScheduler.add(tasks)
+    }
   }
 
   addIndicator (create: PickRequired<IndicatorCreate, 'id' | 'name'>, paneId: string, isStack: boolean): boolean {
@@ -1190,7 +1214,7 @@ export default class StoreImp implements Store {
     paneIndicators.push(indicator)
     this._indicators.set(paneId, paneIndicators)
     this._sortIndicators(paneId)
-    this._addIndicatorCalcTask(indicator, 'init')
+    this._calcIndicator(indicator)
     return true
   }
 
@@ -1224,7 +1248,6 @@ export default class StoreImp implements Store {
       const paneIndicators = this.getIndicatorsByPaneId(indicator.paneId)
       const index = paneIndicators.findIndex(ins => ins.id === indicator.id)
       if (index > -1) {
-        this._taskScheduler.remove(generateTaskId(indicator.id))
         paneIndicators.splice(index, 1)
         removed = true
       }
@@ -1282,7 +1305,7 @@ export default class StoreImp implements Store {
         sortFlag = true
       }
       if (calc) {
-        this._addIndicatorCalcTask(indicator, 'update')
+        this._calcIndicator(indicator)
       } else {
         if (draw) {
           updateFlag = true

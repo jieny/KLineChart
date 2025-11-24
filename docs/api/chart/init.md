@@ -2,12 +2,29 @@
 outline: deep
 ---
 
+<script setup>
+import InitBasic from '../../@views/api/samples/init-basic/index.vue'
+import InitLayout from '../../@views/api/samples/init-layout/index.vue'
+import InitLocaleBuiltIn from '../../@views/api/samples/init-locale-built-in/index.vue'
+import InitLocaleExtension from '../../@views/api/samples/init-locale-extension/index.vue'
+import InitTimezone from '../../@views/api/samples/init-timezone/index.vue'
+import InitStylesBuiltIn from '../../@views/api/samples/init-styles-built-in/index.vue'
+import InitStylesExtension from '../../@views/api/samples/init-styles-extension/index.vue'
+import InitStylesOverride from '../../@views/api/samples/init-styles-override/index.vue'
+import InitFormatDate from '../../@views/api/samples/init-formateDate/index.vue'
+import InitFormatBigNumber from '../../@views/api/samples/init-formatBigNumber/index.vue'
+import InitThousandsSeparatorNone from '../../@views/api/samples/init-thousandsSeparator-none/index.vue'
+import InitThousandsSeparatorFormat from '../../@views/api/samples/init-thousandsSeparator-format/index.vue'
+import InitDecimalFoldNone from '../../@views/api/samples/init-decimalFold-none/index.vue'
+import InitDecimalFoldFormat from '../../@views/api/samples/init-decimalFold-format/index.vue'
+import InitZoomAnchor from '../../@views/api/samples/init-zoomAnchor/index.vue'
+import Tip from '../../@components/Tip.vue'
+</script>
+
 # init(ds, options?)
 `init` 用于初始化一个图表。
 
-::: tip 提示
-调用时，需要等待容器 `dom` 准备完成之后。
-:::
+<Tip title="提示" tip="调用时，需要等待容器准备完成之后。"/>
 
 ## 参考 {#reference}
 <!-- @include: @/@views/api/references/chart/init.md -->
@@ -48,27 +65,12 @@ outline: deep
   - `decimalFold` 小数 0 折叠配置。
     - `threshold` 折叠阈值。
     - `format` 自定义格式化方法。
+  - `zoomAnchor` 将缩放图表时的锚点位置设置为 `last_bar` 或 `cursor_point`
 
 ### 返回值 {#returns}
 `init` 返回一个图表实例对象 `Chart`。
 
 ## 用法 {#usage}
-<script setup>
-import InitBasic from '../../@views/api/samples/init-basic/index.vue'
-import InitLayout from '../../@views/api/samples/init-layout/index.vue'
-import InitLocaleBuiltIn from '../../@views/api/samples/init-locale-built-in/index.vue'
-import InitLocaleExtension from '../../@views/api/samples/init-locale-extension/index.vue'
-import InitTimezone from '../../@views/api/samples/init-timezone/index.vue'
-import InitStylesBuiltIn from '../../@views/api/samples/init-styles-built-in/index.vue'
-import InitStylesExtension from '../../@views/api/samples/init-styles-extension/index.vue'
-import InitStylesOverride from '../../@views/api/samples/init-styles-override/index.vue'
-import InitFormatDate from '../../@views/api/samples/init-formateDate/index.vue'
-import InitFormatBigNumber from '../../@views/api/samples/init-formatBigNumber/index.vue'
-import InitThousandsSeparatorNone from '../../@views/api/samples/init-thousandsSeparator-none/index.vue'
-import InitThousandsSeparatorFormat from '../../@views/api/samples/init-thousandsSeparator-format/index.vue'
-import InitDecimalFoldNone from '../../@views/api/samples/init-decimalFold-none/index.vue'
-import InitDecimalFoldFormat from '../../@views/api/samples/init-decimalFold-format/index.vue'
-</script>
 
 ### 基本使用 {#basic}
 <InitBasic/>
@@ -111,4 +113,7 @@ import InitDecimalFoldFormat from '../../@views/api/samples/init-decimalFold-for
 
 ### 小数 0 折叠自定义显示 {#init-decimalFold-format}
 <InitDecimalFoldFormat />
+
+### 缩放位置{#init-zoomAnchor}
+<InitZoomAnchor />
 
