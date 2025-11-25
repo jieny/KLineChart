@@ -1188,7 +1188,7 @@ export default class StoreImp implements Store {
     if (indicators.length > 0) {
       const tasks: Record<string, Promise<unknown>> = {}
       indicators.forEach(indicator => {
-        tasks[indicator.id] = indicator.calcImp(this._dataList,this._dataListForIndicator)
+        tasks[indicator.id] = indicator.calcImp(this._dataList, this._dataListForIndicator)
       })
       this._taskScheduler.add(tasks)
     }
