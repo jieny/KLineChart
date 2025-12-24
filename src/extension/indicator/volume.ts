@@ -21,6 +21,7 @@ interface Vol {
   open: number
   close: number
   volume?: number
+  color?: string
   ma1?: number
   ma2?: number
   ma3?: number
@@ -36,7 +37,10 @@ function getVolumeFigure (): IndicatorFigure<Vol> {
       const current = data.current
       let color = formatValue(indicator.styles, 'bars[0].noChangeColor', (defaultStyles!.bars)[0].noChangeColor)
       if (isValid(current)) {
-        if (current.close > current.open) {
+        const currentColor = current.color
+        if (currentColor !== undefined) {
+          color = current.color
+        } else if (current.close > current.open) {
           color = formatValue(indicator.styles, 'bars[0].upColor', (defaultStyles!.bars)[0].upColor)
         } else if (current.close < current.open) {
           color = formatValue(indicator.styles, 'bars[0].downColor', (defaultStyles!.bars)[0].downColor)
@@ -71,7 +75,7 @@ const volume: IndicatorTemplate<Vol, number> = {
     const volSums: number[] = []
     return dataList.map((kLineData, i) => {
       const volume = kLineData.volume ?? 0
-      const vol: Vol = { volume, open: kLineData.open, close: kLineData.close }
+      const vol: Vol = { volume, open: kLineData.open, close: kLineData.close, color: kLineData.color }
       params.forEach((p, index) => {
         volSums[index] = (volSums[index] ?? 0) + volume
         if (i >= p - 1) {
