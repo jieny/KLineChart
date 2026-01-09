@@ -61,9 +61,9 @@ provide('toggle-appearance', async ({ clientX: x, clientY: y }) => {
 <template>
   <Loading v-if="!mounted" className="page-loading"/>
   <DefaultTheme.Layout>
-    <template #layout-top>
+    <!-- <template #layout-top>
       <Banner/>
-    </template>
+    </template> -->
     <template #home-hero-before>
       <HomeHero/>
       <HomeTopSponsor/>

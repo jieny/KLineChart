@@ -26,6 +26,12 @@
       "logo": "/images/sponsors/hutu.png",
       "website": "https://hutu.live",
       "amount": 18.8
+    },
+    {
+      "name": "好主机",
+      "text": "好主机",
+      "website": "https://www.haozhuji.net/",
+      "amount": 88.8
     }
   ]
 
@@ -81,13 +87,15 @@
       <!-- <h4 v-if="platinum.length > 0">{{ lang === 'zh-CN' ? '铂金赞助商' : 'Platinum Sponsors' }}</h4> -->
       <div v-if="platinum.length > 0" class="sponsor-grid sponsor-platinum-grid">
         <a v-for="item in platinum" class="sponsor-grid-item item" target="_blank" rel="noreferrer" :href="item.website">
-          <img class="image" :src="item.logo"/>
+          <img class="image" v-if="!!item.logo" :src="item.logo"/>
+          <span class="text" v-if="!!item.text">{{ item.text }}</span>
         </a>
       </div>
       <!-- <h4 v-if="gold.length > 0">{{ lang === 'zh-CN' ? '黄金赞助商' : 'Gold Sponsors' }}</h4> -->
       <div v-if="gold.length > 0" class="sponsor-grid sponsor-gold-grid">
         <a v-for="item in gold" class="sponsor-grid-item item" target="_blank" rel="noreferrer" :href="item.website">
-          <img class="image" :src="item.logo"/>
+          <img class="image" v-if="!!item.logo" :src="item.logo"/>
+          <span class="text" v-if="!!item.text">{{ item.text }}</span>
         </a>
       </div>
       <div class="sponsor-become">
@@ -106,7 +114,10 @@
 
 <style scoped>
   .sponsor {
+    display: flex;
+    flex-direction: column;
     width: 100%;
+    gap: 2px;
   }
 
   .sponsor h4 {
@@ -173,6 +184,10 @@
 
   .sponsor-gold-grid .item .image {
     height: 16px;
+  }
+
+  .sponsor-gold-grid .item .text {
+    font-size: 14px;
   }
 
   .sponsor-become {
