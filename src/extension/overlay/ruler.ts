@@ -23,21 +23,21 @@ function getIntervalText (interval: number) {
   const result: string[] = []
   if (interval > daySecs) {
     const days = Math.floor(interval / daySecs)
-    result.push(days.toString(), 'days') // m.days()
+    result.push(days.toString(), 'd') // m.days()
     interval = interval % daySecs
   }
   if (interval > hourSecs) {
     const hours = Math.floor(interval / hourSecs)
-    result.push(hours.toString(), 'hours') // m.hours()
+    result.push(hours.toString(), 'h') // m.hours()
     interval = interval % hourSecs
   }
   if (interval > minSecs) {
     const mins = Math.floor(interval / minSecs)
-    result.push(mins.toString(), 'mins') // m.mins()
+    result.push(mins.toString(), 'm') // m.mins()
     interval = interval % minSecs
   }
   if (interval > 0) {
-    result.push('1', 'mins') // m.mins()
+    result.push('1', 'm') // m.mins()
   }
   return result.join('')
 }
@@ -71,7 +71,7 @@ const ruler: OverlayTemplate = {
       const vertArrow = getArrowLine({ x: midX, y: pt1.y }, { x: midX, y: pt2.y })
       const horzArrow = getArrowLine({ x: pt1.x, y: midY }, { x: pt2.x, y: midY })
 
-      const bgColor = pt1.y > pt2.y ? '#F7525F' : '#2962FF'
+      const bgColor = pt1.y > pt2.y ? '#2962FF' : '#F7525F'
       const textStyles = {
         color: '#ffffff',
         backgroundColor: bgColor,
@@ -99,7 +99,7 @@ const ruler: OverlayTemplate = {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- ignore
       // @ts-expect-error
       const distSec = ((points[1].timestamp - points[0].timestamp) / 1000)
-      const text = `${priceChg} (${pctChg}%)\n${barNum}bars, ${getIntervalText(distSec)}` // bars → ${m.num_bar()}
+      const text = `${priceChg} (${pctChg}%)\n${barNum} bars ${getIntervalText(distSec)}` // bars → ${m.num_bar()}
       let textY = pt2.y + 10
       let boxBaseLine = 'top'
       if (pt1.y > pt2.y) {
