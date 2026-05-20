@@ -79,18 +79,22 @@
     draw?: (params: object) => boolean
     onDataStateChange?: (params: object) => void
   },
-  isStack?: boolean,
-  paneOptions: {
-    id?: string
-    height?: number
-    minHeight?: number
-    dragEnabled?: boolean
-    order?: number
-    state?: 'normal' | 'maximize' | 'minimize'
-    axis?: {
-      name: string
+  options?: {
+    isStack?: boolean
+    pane?: {
+      id?: string
+      height?: number
+      minHeight?: number
+      dragEnabled?: boolean
+      order?: number
+      state?: 'normal' | 'maximize' | 'minimize'
+    }
+    yAxis?: {
+      id?: string
+      name?: string
       reverse?: boolean
       inside?: boolean
+      needWidget?: boolean
       position?: 'left' | 'right'
       scrollZoomEnabled?: boolean
       gap?: {

@@ -25,32 +25,31 @@ import CandleBarView, { type CandleBarOptions } from './CandleBarView'
 export default class IndicatorView extends CandleBarView {
   override getCandleBarOptions (): Nullable<CandleBarOptions> {
     const pane = this.getWidget().getPane()
-    const yAxis = pane.getAxisComponent()
-    if (!yAxis.isInCandle()) {
-      const chartStore = pane.getChart().getChartStore()
-      const indicators = chartStore.getIndicatorsByPaneId(pane.getId())
-      for (const indicator of indicators) {
-        if (indicator.shouldOhlc && indicator.visible) {
-          const indicatorStyles = indicator.styles
-          const defaultStyles = chartStore.getStyles().indicator
-          const compareRule = formatValue(indicatorStyles, 'ohlc.compareRule', defaultStyles.ohlc.compareRule) as CandleColorCompareRule
-          const upColor = formatValue(indicatorStyles, 'ohlc.upColor', defaultStyles.ohlc.upColor) as string
-          const downColor = formatValue(indicatorStyles, 'ohlc.downColor', defaultStyles.ohlc.downColor) as string
-          const noChangeColor = formatValue(indicatorStyles, 'ohlc.noChangeColor', defaultStyles.ohlc.noChangeColor) as string
-          return {
-            type: 'ohlc',
-            styles: {
-              compareRule,
-              upColor,
-              downColor,
-              noChangeColor,
-              upBorderColor: upColor,
-              downBorderColor: downColor,
-              noChangeBorderColor: noChangeColor,
-              upWickColor: upColor,
-              downWickColor: downColor,
-              noChangeWickColor: noChangeColor
-            }
+    const chartStore = pane.getChart().getChartStore()
+    const indicators = chartStore.getIndicatorsByPaneId(pane.getId())
+    for (const indicator of indicators) {
+      const yAxis = pane.getYAxisComponentById(indicator.yAxisId)
+      if (indicator.shouldOhlc && indicator.visible && !yAxis.isInCandle()) {
+        const indicatorStyles = indicator.styles
+        const defaultStyles = chartStore.getStyles().indicator
+        const compareRule = formatValue(indicatorStyles, 'ohlc.compareRule', defaultStyles.ohlc.compareRule) as CandleColorCompareRule
+        const upColor = formatValue(indicatorStyles, 'ohlc.upColor', defaultStyles.ohlc.upColor) as string
+        const downColor = formatValue(indicatorStyles, 'ohlc.downColor', defaultStyles.ohlc.downColor) as string
+        const noChangeColor = formatValue(indicatorStyles, 'ohlc.noChangeColor', defaultStyles.ohlc.noChangeColor) as string
+        return {
+          yAxisId: indicator.yAxisId,
+          type: 'ohlc',
+          styles: {
+            compareRule,
+            upColor,
+            downColor,
+            noChangeColor,
+            upBorderColor: upColor,
+            downBorderColor: downColor,
+            noChangeBorderColor: noChangeColor,
+            upWickColor: upColor,
+            downWickColor: downColor,
+            noChangeWickColor: noChangeColor
           }
         }
       }
@@ -64,13 +63,13 @@ export default class IndicatorView extends CandleBarView {
     const pane = widget.getPane()
     const chart = pane.getChart()
     const bounding = widget.getBounding()
-    const xAxis = chart.getXAxisPane().getAxisComponent()
-    const yAxis = pane.getAxisComponent()
+    const xAxis = chart.getXAxisPane().getXAxisComponent()
     const chartStore = chart.getChartStore()
     const indicators = chartStore.getIndicatorsByPaneId(pane.getId())
     const defaultStyles = chartStore.getStyles().indicator
     ctx.save()
     indicators.forEach(indicator => {
+      const yAxis = pane.getYAxisComponentById(indicator.yAxisId)
       if (indicator.visible) {
         if (indicator.zLevel < 0) {
           ctx.globalCompositeOperation = 'destination-over'
@@ -122,7 +121,7 @@ export default class IndicatorView extends CandleBarView {
                 nextCoordinate[key] = yAxis.convertToPixel(nextValue)
               }
             })
-            eachFigures(indicator, dataIndex, defaultStyles, (figure: IndicatorFigure, figureStyles: IndicatorFigureStyle, figureIndex: number) => {
+            eachFigures(indicator, dataIndex, barSpace, defaultStyles, (figure: IndicatorFigure, figureStyles: IndicatorFigureStyle, figureIndex: number) => {
               if (isValid(currentData?.[figure.key])) {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- ignore
                 const valueY = currentCoordinate[figure.key]
@@ -134,55 +133,68 @@ export default class IndicatorView extends CandleBarView {
                   xAxis,
                   yAxis
                 })
-                if (!isValid<IndicatorFigureAttrs>(attrs)) {
-                  switch (figure.type) {
-                    case 'circle': {
+                switch (figure.type) {
+                  case 'text': {
+                    attrs = {
+                      x,
                       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- ignore
-                      attrs = { x, y: valueY, r: Math.max(1, halfGapBar) }
-                      break
+                      y: valueY,
+                      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- ignore
+                      text: currentData?.[figure.key],
+                      align: 'center',
+                      baseline: 'middle',
+                      ...attrs
                     }
-                    case 'rect':
-                    case 'bar': {
-                      const baseValue = figure.baseValue ?? yAxis.getRange().from
-                      const baseValueY = yAxis.convertToPixel(baseValue)
-                      let height = Math.abs(baseValueY - (valueY as number))
-                      if (baseValue !== currentData?.[figure.key]) {
-                        height = Math.max(1, height)
-                      }
-                      let y = 0
-                      if (valueY > baseValueY) {
-                        y = baseValueY
-                      } else {
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- ignore
-                        y = valueY
-                      }
-                      attrs = {
-                        x: x - halfGapBar,
-                        y,
-                        width: Math.max(1, halfGapBar * 2),
-                        height
-                      }
-                      break
-                    }
-                    case 'line': {
-                      if (!isValid(lines[figureIndex])) {
-                        lines[figureIndex] = []
-                      }
-                      if (isNumber(currentCoordinate[figure.key]) && isNumber(nextCoordinate[figure.key])) {
-                        lines[figureIndex].push({
-                          coordinates: [
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- ignore
-                            { x: currentCoordinate.x, y: currentCoordinate[figure.key] },
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- ignore
-                            { x: nextCoordinate.x, y: nextCoordinate[figure.key] }
-                          ],
-                          styles: figureStyles as unknown as SmoothLineStyle
-                        })
-                      }
-                      break
-                    }
-                    default: { break }
+                    break
                   }
+                  case 'circle': {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- ignore
+                    attrs = { x, y: valueY, r: Math.max(1, halfGapBar), ...attrs }
+                    break
+                  }
+                  case 'rect':
+                  case 'bar': {
+                    const baseValue = figure.baseValue ?? yAxis.getRange().from
+                    const baseValueY = yAxis.convertToPixel(baseValue)
+                    let height = Math.abs(baseValueY - (valueY as number))
+                    if (baseValue !== currentData?.[figure.key]) {
+                      height = Math.max(1, height)
+                    }
+                    let y = 0
+                    if (valueY > baseValueY) {
+                      y = baseValueY
+                    } else {
+                      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- ignore
+                      y = valueY
+                    }
+                    const barWidth = attrs?.width ?? halfGapBar * 2
+                    attrs = {
+                      x: x - barWidth / 2,
+                      y,
+                      width: Math.max(1, barWidth),
+                      height,
+                      ...attrs
+                    }
+                    break
+                  }
+                  case 'line': {
+                    if (!isValid(lines[figureIndex])) {
+                      lines[figureIndex] = []
+                    }
+                    if (isNumber(currentCoordinate[figure.key]) && isNumber(nextCoordinate[figure.key])) {
+                      lines[figureIndex].push({
+                        coordinates: attrs?.coordinates ?? [
+                          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- ignore
+                          { x: currentCoordinate.x, y: currentCoordinate[figure.key] },
+                          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- ignore
+                          { x: nextCoordinate.x, y: nextCoordinate[figure.key] }
+                        ],
+                        styles: figureStyles as unknown as SmoothLineStyle
+                      })
+                    }
+                    break
+                  }
+                  default: { break }
                 }
                 const type = figure.type!
                 if (isValid<IndicatorFigureAttrs>(attrs) && type !== 'line') {

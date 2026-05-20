@@ -1,20 +1,16 @@
 import { init } from 'klinecharts'
 
 const chart = init('createIndicator-paneOptions-axis-chart')
-chart.createIndicator(
-  'MA',
-  false,
-  {
-    id: 'candle_pane',
-    axis: {
-      createTicks: ({ defaultTicks }) => {
-        return defaultTicks.map(
-          ({ coord, value, text }) => ({ coord, value, text: `$${text}` })
-        )
-      }
+chart.createIndicator('MA', {
+  pane: { id: 'candle_pane' },
+  yAxis: {
+    createTicks: ({ defaultTicks }) => {
+      return defaultTicks.map(
+        ({ coord, value, text }) => ({ coord, value, text: `$${text}` })
+      )
     }
   }
-)
+})
 
 chart.setSymbol({ ticker: 'TestSymbol' })
 chart.setPeriod({ span: 1, type: 'day' })

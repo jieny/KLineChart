@@ -15,11 +15,17 @@ const props = defineProps(['title', 'description', 'outClass'])
 
 <style scoped>
 .section {
+  position: relative;
   display: flex;
   flex-direction: row;
   justify-content: center;
-  padding: 80px 24px 0 24px;
+  padding: 92px 24px 0 24px;
 }
+
+.section + .section {
+  margin-top: 8px;
+}
+
 .content {
   display: flex;
   flex-direction: column;
@@ -30,49 +36,87 @@ const props = defineProps(['title', 'description', 'outClass'])
 }
 
 .title {
-  font-size: 28px;
-  line-height: 40px;
+  font-size: clamp(25px, 3.2vw, 31px);
+  line-height: clamp(35px, 4vw, 40px);
   text-align: center;
-  font-weight: bold;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: sectionReveal .6s ease forwards;
 }
 .description {
-  padding-top: 18px;
-  font-size: 18px;
-  line-height: 26px;
+  padding-top: 14px;
+  font-size: clamp(15px, 1.7vw, 17px);
+  line-height: clamp(24px, 2.8vw, 28px);
   text-align: center;
   color: var(--vp-c-text-2);
-  max-width: 660px;
-  padding-bottom: 32px;
+  max-width: 620px;
+  padding-bottom: 28px;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: sectionReveal .6s ease forwards .12s;
+}
+
+.content > :deep(*:last-child) {
+  opacity: 0;
+  transform: translateY(22px);
+  animation: sectionReveal .7s ease forwards .22s;
+}
+
+@keyframes sectionReveal {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (min-width: 640px) {
   .section {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    padding: 150px 48px 0 48px;
+    padding: 128px 48px 0 48px;
+  }
+
+  .section + .section {
+    margin-top: 10px;
   }
 
   .content {
-    padding: 0 32px;
+    padding: 0 24px;
   }
 
-  .title {
-    font-size: 36px;
-    line-height: 42px;
-  }
   .description {
-    padding-top: 26px;
-    font-size: 20px;
-    line-height: 30px;
-    max-width: 660px;
-    padding-bottom: 52px;
+    padding-top: 18px;
+    max-width: 640px;
+    padding-bottom: 44px;
   }
 }
 
 @media (min-width: 960px) {
   .section {
-    padding: 150px 64px 0 64px;
+    padding: 152px 64px 0 64px;
+  }
+
+  .section + .section {
+    margin-top: 12px;
+  }
+
+  .content {
+    padding: 0 32px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .title,
+  .description,
+  .content > :deep(*:last-child) {
+    opacity: 1;
+    transform: none;
+    animation: none;
   }
 }
 </style>

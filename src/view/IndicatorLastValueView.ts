@@ -19,6 +19,7 @@ import { eachFigures, type IndicatorFigure, type IndicatorFigureStyle } from '..
 import View from './View'
 
 import type { YAxis } from '../component/YAxis'
+import type YAxisWidget from '../widget/YAxisWidget'
 
 export default class IndicatorLastValueView extends View<YAxis> {
   override drawImp (ctx: CanvasRenderingContext2D): void {
@@ -30,11 +31,13 @@ export default class IndicatorLastValueView extends View<YAxis> {
     const lastValueMarkStyles = defaultStyles.lastValueMark
     const lastValueMarkTextStyles = lastValueMarkStyles.text
     if (lastValueMarkStyles.show) {
-      const yAxis = pane.getAxisComponent()
+      const yAxisWidget = widget as unknown as YAxisWidget
+      const yAxis = yAxisWidget.getAxisComponent()
       const yAxisRange = yAxis.getRange()
       const dataList = chartStore.getDataList()
+      const barSpace = chartStore.getBarSpace()
       const dataIndex = dataList.length - 1
-      const indicators = chartStore.getIndicatorsByPaneId(pane.getId())
+      const indicators = chartStore.getIndicatorsByPaneId(pane.getId()).filter(indicator => indicator.yAxisId === yAxis.id)
       const formatter = chartStore.getInnerFormatter()
       const decimalFold = chartStore.getDecimalFold()
       const thousandsSeparator = chartStore.getThousandsSeparator()
@@ -43,7 +46,7 @@ export default class IndicatorLastValueView extends View<YAxis> {
         const data = result[dataIndex] ?? {}
         if (isValid(data) && indicator.visible) {
           const precision = indicator.precision
-          eachFigures(indicator, dataIndex, defaultStyles, (figure: IndicatorFigure, figureStyles: Required<IndicatorFigureStyle>) => {
+          eachFigures(indicator, dataIndex, barSpace, defaultStyles, (figure: IndicatorFigure, figureStyles: Required<IndicatorFigureStyle>) => {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- ignore
             const value = data[figure.key]
             if (isNumber(value)) {

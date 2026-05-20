@@ -18,6 +18,7 @@ import type DrawPane from '../pane/DrawPane'
 
 import type Bounding from '../common/Bounding'
 import type { Chart } from '../Chart'
+import type PickRequired from '../common/PickRequired'
 
 export interface AxisTick {
   coord: number
@@ -64,33 +65,40 @@ export type AxisCreateTicksCallback = (params: AxisCreateTicksParams) => AxisTic
 
 export type AxisMinSpanCallback = (value: number) => number
 
-export interface AxisTemplate {
-  name: string
+export const TICK_COUNT = 8
+
+export const DEFAULT_AXIS_ID = 'default'
+
+export interface AxisOverride {
+  name?: string
+  id?: string
+  paneId?: string
   reverse?: boolean
   inside?: boolean
   position?: AxisPosition
   scrollZoomEnabled?: boolean
   gap?: AxisGap
+  createRange?: AxisCreateRangeCallback
+  createTicks?: AxisCreateTicksCallback
+}
+
+export interface AxisTemplate extends PickRequired<AxisOverride, 'name'> {
   valueToRealValue?: AxisValueToValueCallback
   realValueToDisplayValue?: AxisValueToValueCallback
   displayValueToRealValue?: AxisValueToValueCallback
   realValueToValue?: AxisValueToValueCallback
   displayValueToText?: (value: number, precision: number) => string
   minSpan?: AxisMinSpanCallback
-  createRange?: AxisCreateRangeCallback
-  createTicks?: AxisCreateTicksCallback
 }
 
 export interface Axis {
-  override: (axis: AxisTemplate) => void
+  override: (axis: AxisOverride) => void
   getTicks: () => AxisTick[]
   getRange: () => AxisRange
   getAutoSize: () => number
   convertToPixel: (value: number) => number
   convertFromPixel: (px: number) => number
 }
-
-export type AxisCreate = Omit<AxisTemplate, 'displayValueToText' | 'valueToRealValue' | 'realValueToDisplayValue' | 'displayValueToRealValue' | 'realValueToValue'>
 
 function getDefaultAxisRange (): AxisRange {
   return {
@@ -160,7 +168,7 @@ export default abstract class AxisImp implements Axis {
 
   protected abstract getBounding (): Bounding
 
-  abstract override (axis: AxisTemplate): void
+  abstract override (axis: AxisOverride): void
 
   abstract getAutoSize (): number
 

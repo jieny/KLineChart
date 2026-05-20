@@ -20,10 +20,14 @@ import { formatPrecision } from '../common/utils/format'
 import { SymbolDefaultPrecisionConstants } from '../common/SymbolInfo'
 
 import AxisImp, {
-  type AxisTemplate, type Axis, type AxisRange,
+  type Axis, type AxisRange,
   type AxisTick, type AxisValueToValueCallback,
   type AxisMinSpanCallback, type AxisCreateRangeCallback,
-  type AxisPosition
+  type AxisPosition,
+  TICK_COUNT,
+  DEFAULT_AXIS_ID,
+  type AxisOverride,
+  type AxisTemplate
 } from './Axis'
 
 import type DrawPane from '../pane/DrawPane'
@@ -32,7 +36,7 @@ import { PaneIdConstants } from '../pane/types'
 
 export type YAxisTemplate = AxisTemplate
 
-const TICK_COUNT = 8
+export type YAxisOverride = AxisOverride & { needWidget?: boolean }
 
 export interface YAxis extends Axis, Required<YAxisTemplate> {
   isFromZero: () => boolean
@@ -43,6 +47,8 @@ export interface YAxis extends Axis, Required<YAxisTemplate> {
 export type YAxisConstructor = new (parent: DrawPane) => YAxis
 
 export default abstract class YAxisImp extends AxisImp implements YAxis {
+  id = DEFAULT_AXIS_ID
+  paneId = ''
   reverse = false
   inside = false
   position: AxisPosition = 'right'
@@ -61,16 +67,49 @@ export default abstract class YAxisImp extends AxisImp implements YAxis {
 
   constructor (parent: DrawPane, yAxis: YAxisTemplate) {
     super(parent)
-    this.override(yAxis)
+    const {
+      minSpan,
+      valueToRealValue,
+      realValueToDisplayValue,
+      displayValueToRealValue,
+      realValueToValue,
+      displayValueToText,
+      ...others
+    } = yAxis
+
+    if (isFunction(minSpan)) {
+      this.minSpan = minSpan
+    }
+    if (isFunction(valueToRealValue)) {
+      this.valueToRealValue = valueToRealValue
+    }
+    if (isFunction(realValueToDisplayValue)) {
+      this.realValueToDisplayValue = realValueToDisplayValue
+    }
+    if (isFunction(displayValueToRealValue)) {
+      this.displayValueToRealValue = displayValueToRealValue
+    }
+    if (isFunction(realValueToValue)) {
+      this.realValueToValue = realValueToValue
+    }
+    if (isFunction(displayValueToText)) {
+      this.displayValueToText = displayValueToText
+    }
+
+    this.override(others)
   }
 
-  override (yAxis: YAxisTemplate): void {
+  override (yAxis: AxisOverride): void {
     const {
+      id,
       name,
       gap,
       ...others
     } = yAxis
-    if (!isString(this.name)) {
+    if (isValid(id) && this.id === DEFAULT_AXIS_ID) {
+      this.id = id
+    }
+    if (!isString(this.name) && isString(name)) {
       this.name = name
     }
     merge(this.gap, gap)
@@ -88,7 +127,7 @@ export default abstract class YAxisImp extends AxisImp implements YAxis {
     let specifyMin = Number.MAX_SAFE_INTEGER
     let specifyMax = Number.MIN_SAFE_INTEGER
     let indicatorPrecision = Number.MAX_SAFE_INTEGER
-    const indicators = chartStore.getIndicatorsByPaneId(paneId)
+    const indicators = chartStore.getIndicatorsByPaneId(paneId).filter(indicator => indicator.yAxisId === this.id)
     indicators.forEach(indicator => {
       shouldOhlc ||= indicator.shouldOhlc
       indicatorPrecision = Math.min(indicatorPrecision, indicator.precision)
@@ -102,6 +141,7 @@ export default abstract class YAxisImp extends AxisImp implements YAxis {
 
     let precision = 4
     const inCandle = this.isInCandle()
+    const isDefaultYAxis = this.id === DEFAULT_AXIS_ID
     if (inCandle) {
       const pricePrecision = chartStore.getSymbol()?.pricePrecision ?? SymbolDefaultPrecisionConstants.PRICE
       if (indicatorPrecision !== Number.MAX_SAFE_INTEGER) {
@@ -118,7 +158,7 @@ export default abstract class YAxisImp extends AxisImp implements YAxis {
     const candleStyles = chart.getStyles().candle
     const isArea = candleStyles.type === 'area'
     const areaValueKey = candleStyles.area.value
-    const shouldCompareHighLow = (inCandle && !isArea) || (!inCandle && shouldOhlc)
+    const shouldCompareHighLow = (inCandle && isDefaultYAxis && !isArea) || (!inCandle && shouldOhlc)
     visibleRangeDataList.forEach((visibleData) => {
       const dataIndex = visibleData.dataIndex
       const data = visibleData.data.current
@@ -127,7 +167,7 @@ export default abstract class YAxisImp extends AxisImp implements YAxis {
           min = Math.min(min, data.low)
           max = Math.max(max, data.high)
         }
-        if (inCandle && isArea) {
+        if (inCandle && isDefaultYAxis && isArea) {
           const value = data[areaValueKey]
           if (isNumber(value)) {
             min = Math.min(min, value)
@@ -262,14 +302,14 @@ export default abstract class YAxisImp extends AxisImp implements YAxis {
     }
 
     const pane = this.getParent()
-    const height = pane.getYAxisWidget()?.getBounding().height ?? 0
+    const height = this.getBounding().height
     const chartStore = pane.getChart().getChartStore()
     const optimalTicks: AxisTick[] = []
-    const indicators = chartStore.getIndicatorsByPaneId(pane.getId())
+    const indicators = chartStore.getIndicatorsByPaneId(pane.getId()).filter(indicator => indicator.yAxisId === this.id)
     const styles = chartStore.getStyles()
     let precision = 0
     let shouldFormatBigNumber = false
-    if (this.isInCandle()) {
+    if (this.isInCandle() && this.id === DEFAULT_AXIS_ID) {
       precision = chartStore.getSymbol()?.pricePrecision ?? SymbolDefaultPrecisionConstants.PRICE
     } else {
       indicators.forEach(indicator => {
@@ -369,7 +409,7 @@ export default abstract class YAxisImp extends AxisImp implements YAxis {
       }
 
       if (crosshairHorizontalTextVisible) {
-        const indicators = chartStore.getIndicatorsByPaneId(pane.getId())
+        const indicators = chartStore.getIndicatorsByPaneId(pane.getId()).filter(indicator => indicator.yAxisId === this.id)
         let indicatorPrecision = 0
         let shouldFormatBigNumber = false
         indicators.forEach(indicator => {
@@ -377,7 +417,7 @@ export default abstract class YAxisImp extends AxisImp implements YAxis {
           shouldFormatBigNumber ||= indicator.shouldFormatBigNumber
         })
         let precision = 2
-        if (this.isInCandle()) {
+        if (this.isInCandle() && this.id === DEFAULT_AXIS_ID) {
           const lastValueMarkStyles = styles.indicator.lastValueMark
           if (lastValueMarkStyles.show && lastValueMarkStyles.text.show) {
             precision = Math.max(indicatorPrecision, pricePrecision)
@@ -410,7 +450,7 @@ export default abstract class YAxisImp extends AxisImp implements YAxis {
   }
 
   protected override getBounding (): Bounding {
-    return this.getParent().getYAxisWidget()!.getBounding()
+    return this.getParent().getYAxisWidgetById(this.id)?.getBounding() ?? this.getParent().getMainWidget().getBounding()
   }
 
   convertFromPixel (pixel: number): number {
@@ -425,14 +465,14 @@ export default abstract class YAxisImp extends AxisImp implements YAxis {
   convertToPixel (value: number): number {
     const range = this.getRange()
     const realValue = this.valueToRealValue(value, { range })
-    const height = this.getParent().getYAxisWidget()?.getBounding().height ?? 0
+    const height = this.getBounding().height
     const { realFrom, realRange } = range
     const rate = (realValue - realFrom) / realRange
     return this.reverse ? Math.round(rate * height) : Math.round((1 - rate) * height)
   }
 
   convertToNicePixel (value: number): number {
-    const height = this.getParent().getYAxisWidget()?.getBounding().height ?? 0
+    const height = this.getBounding().height
     const pixel = this.convertToPixel(value)
     return Math.round(Math.max(height * 0.05, Math.min(pixel, height * 0.98)))
   }

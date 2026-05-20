@@ -24,18 +24,25 @@ import CandleLastPriceLabelView from '../view/CandleLastPriceLabelView'
 import IndicatorLastValueView from '../view/IndicatorLastValueView'
 import OverlayYAxisView from '../view/OverlayYAxisView'
 import CrosshairHorizontalLabelView from '../view/CrosshairHorizontalLabelView'
+import { DEFAULT_AXIS_ID } from '../component/Axis'
 
 export default class YAxisWidget extends DrawWidget<DrawPane<YAxis>> {
+  private readonly _yAxis: YAxis
   private readonly _yAxisView = new YAxisView(this)
   private readonly _candleLastPriceLabelView = new CandleLastPriceLabelView(this)
   private readonly _indicatorLastValueView = new IndicatorLastValueView(this)
   private readonly _overlayYAxisView = new OverlayYAxisView(this)
   private readonly _crosshairHorizontalLabelView = new CrosshairHorizontalLabelView(this)
 
-  constructor (rootContainer: HTMLElement, pane: DrawPane<YAxis>) {
+  constructor (rootContainer: HTMLElement, pane: DrawPane<YAxis>, yAxis: YAxis) {
     super(rootContainer, pane)
+    this._yAxis = yAxis
     this.setCursor('ns-resize')
     this.addChild(this._overlayYAxisView)
+  }
+
+  getAxisComponent (): YAxis {
+    return this._yAxis
   }
 
   override getName (): string {
@@ -43,20 +50,15 @@ export default class YAxisWidget extends DrawWidget<DrawPane<YAxis>> {
   }
 
   override updateMain (ctx: CanvasRenderingContext2D): void {
-    const minimize = this.getPane().getOptions().state === 'minimize'
-    this._yAxisView.draw(ctx, minimize)
-    if (!minimize) {
-      if (this.getPane().getAxisComponent().isInCandle()) {
-        this._candleLastPriceLabelView.draw(ctx)
-      }
-      this._indicatorLastValueView.draw(ctx)
+    this._yAxisView.draw(ctx)
+    if (this._yAxis.id === DEFAULT_AXIS_ID && this.getAxisComponent().isInCandle()) {
+      this._candleLastPriceLabelView.draw(ctx)
     }
+    this._indicatorLastValueView.draw(ctx)
   }
 
   override updateOverlay (ctx: CanvasRenderingContext2D): void {
-    if (this.getPane().getOptions().state !== 'minimize') {
-      this._overlayYAxisView.draw(ctx)
-      this._crosshairHorizontalLabelView.draw(ctx)
-    }
+    this._overlayYAxisView.draw(ctx)
+    this._crosshairHorizontalLabelView.draw(ctx)
   }
 }

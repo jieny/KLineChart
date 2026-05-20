@@ -1,11 +1,12 @@
 import { init } from 'klinecharts'
 
 const chart = init('createIndicator-stack-chart')
-chart.createIndicator('MA', false, { id: 'candle_pane' })
-chart.createIndicator('EMA', true, { id: 'candle_pane' })
+chart.createIndicator('MA', { pane: { id: 'candle_pane' } })
+chart.createIndicator('EMA', { isStack: true, pane: { id: 'candle_pane' } })
 
-const id = chart.createIndicator('BOLL')
-chart.createIndicator('EMA', true, { id })
+const paneId = 'boll_pane'
+chart.createIndicator('BOLL', { pane: { id: paneId } })
+chart.createIndicator('EMA', { isStack: true, pane: { id: paneId } })
 
 chart.setSymbol({ ticker: 'TestSymbol' })
 chart.setPeriod({ span: 1, type: 'day' })

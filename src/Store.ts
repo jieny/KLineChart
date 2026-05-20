@@ -15,7 +15,6 @@
 import type Nullable from './common/Nullable'
 import type PickPartial from './common/PickPartial'
 import type DeepPartial from './common/DeepPartial'
-import type PickRequired from './common/PickRequired'
 import type { KLineData, VisibleRangeData } from './common/Data'
 import type VisibleRange from './common/VisibleRange'
 import type Coordinate from './common/Coordinate'
@@ -37,9 +36,9 @@ import { logWarn } from './common/utils/logger'
 import { UpdateLevel } from './common/Updater'
 import type { DataLoader, DataLoaderGetBarsParams, DataLoadMore, DataLoadType } from './common/DataLoader'
 
-import type { Options, Formatter, ThousandsSeparator, DecimalFold, FormatDateType, FormatDateParams, FormatBigNumber, FormatExtendText, FormatExtendTextParams, ZoomAnchor, ZoomAnchorType } from './Options'
+import type { Options, Formatter, ThousandsSeparator, DecimalFold, FormatDateType, FormatDateParams, FormatBigNumber, FormatExtendText, FormatExtendTextParams, ZoomAnchor, ZoomAnchorType, LayoutBasicParams } from './Options'
 
-import type { IndicatorOverride, IndicatorCreate, IndicatorFilter } from './component/Indicator'
+import type { IndicatorOverride, IndicatorCreate, IndicatorFilter, Indicator } from './component/Indicator'
 import type IndicatorImp from './component/Indicator'
 import { getIndicatorClass } from './extension/indicator/index'
 
@@ -49,13 +48,23 @@ import { getOverlayInnerClass } from './extension/overlay/index'
 
 import { getStyles as getExtensionStyles } from './extension/styles/index'
 
-import { PaneIdConstants } from './pane/types'
+import { PaneIdConstants, PANE_DEFAULT_HEIGHT, PANE_MIN_HEIGHT } from './pane/types'
 
 import type Chart from './Chart'
+import type ExcludePickPartial from './common/ExcludePickPartial'
 
 const BarSpaceLimitConstants = {
   MIN: 1,
   MAX: 50
+}
+
+const DEFAULT_LAYOUT_BASIC_PARAMS: Required<LayoutBasicParams> = {
+  barSpaceLimitMin: BarSpaceLimitConstants.MIN,
+  barSpaceLimitMax: BarSpaceLimitConstants.MAX,
+  yAxisPosition: 'right',
+  yAxisInside: false,
+  paneMinHeight: PANE_MIN_HEIGHT,
+  paneHeight: PANE_DEFAULT_HEIGHT
 }
 
 type ScrollLimitRole = 'bar_count' | 'distance'
@@ -123,7 +132,7 @@ export interface Store {
   removeOverlay: (filter?: OverlayFilter) => boolean
   setZoomEnabled: (enabled: boolean) => void
   isZoomEnabled: () => boolean
-  setZoomAnchor: (behavior: ZoomAnchor) => void
+  setZoomAnchor: (anchor: ZoomAnchorType | Partial<ZoomAnchor>) => void
   getZoomAnchor: () => ZoomAnchor
   setScrollEnabled: (enabled: boolean) => void
   isScrollEnabled: () => boolean
@@ -255,6 +264,8 @@ export default class StoreImp implements Store {
    */
   private _gapBarSpace: number
 
+  private readonly _layoutBasicParams = { ...DEFAULT_LAYOUT_BASIC_PARAMS }
+
   /**
    * Distance from the last data to the right of the drawing area
    */
@@ -370,6 +381,10 @@ export default class StoreImp implements Store {
 
   constructor (chart: Chart, options?: Options) {
     this._chart = chart
+    const { layout } = options ?? {}
+    if (isValid(layout) && !isArray(layout)) {
+      merge(this._layoutBasicParams, layout.basicParams)
+    }
     this._calcOptimalBarSpace()
     this._lastBarRightSideDiffBarCount = this._offsetRightDistance / this._barSpace
     const { styles, locale, timezone, formatter, thousandsSeparator, decimalFold, zoomAnchor } = options ?? {}
@@ -786,7 +801,11 @@ export default class StoreImp implements Store {
   }
 
   setBarSpace (barSpace: number, adjustBeforeFunc?: () => void): void {
-    if (barSpace < BarSpaceLimitConstants.MIN || barSpace > BarSpaceLimitConstants.MAX || this._barSpace === barSpace) {
+    if (
+      barSpace < this._layoutBasicParams.barSpaceLimitMin ||
+      barSpace > this._layoutBasicParams.barSpaceLimitMax ||
+      this._barSpace === barSpace
+    ) {
       return
     }
     this._barSpace = barSpace
@@ -800,6 +819,10 @@ export default class StoreImp implements Store {
       buildYAxisTick: true,
       cacheYAxisWidth: true
     })
+  }
+
+  getLayoutBasicParams (): Required<LayoutBasicParams> {
+    return this._layoutBasicParams
   }
 
   setTotalBarSpace (totalSpace: number): void {
@@ -1103,7 +1126,7 @@ export default class StoreImp implements Store {
   }
 
   setCrosshair (
-    crosshair?: Crosshair,
+    crosshair?: Nullable<Crosshair>,
     options?: { notInvalidate?: boolean, notExecuteAction?: boolean, forceInvalidate?: boolean }
   ): void {
     const { notInvalidate, notExecuteAction, forceInvalidate } = options ?? {}
@@ -1194,18 +1217,18 @@ export default class StoreImp implements Store {
     }
   }
 
-  addIndicator (create: PickRequired<IndicatorCreate, 'id' | 'name'>, paneId: string, isStack: boolean): boolean {
+  addIndicator (create: ExcludePickPartial<Indicator, 'id' | 'name' | 'paneId'>, isStack: boolean): boolean {
     const { name } = create
     const filterIndicators = this.getIndicatorsByFilter(create)
     if (filterIndicators.length > 0) {
       return false
     }
+    const paneId = create.paneId
     let paneIndicators = this.getIndicatorsByPaneId(paneId)
     const IndicatorClazz = getIndicatorClass(name)!
     const indicator = new IndicatorClazz()
 
     this._synchronizeIndicatorSeriesPrecision(indicator)
-    indicator.paneId = paneId
     indicator.override(create)
     if (!isStack) {
       this.removeIndicator({ paneId })
@@ -1299,7 +1322,25 @@ export default class StoreImp implements Store {
     let sortFlag = false
     const filterIndicators = this.getIndicatorsByFilter(override)
     filterIndicators.forEach(indicator => {
+      const prevPaneId = indicator.paneId
       indicator.override(override)
+      const currentPaneId = indicator.paneId
+      if (prevPaneId !== currentPaneId) {
+        const prevPaneIndicators = this.getIndicatorsByPaneId(prevPaneId)
+        const index = prevPaneIndicators.findIndex(ins => ins.id === indicator.id)
+        if (index > -1) {
+          prevPaneIndicators.splice(index, 1)
+        }
+        if (prevPaneIndicators.length === 0) {
+          this._indicators.delete(prevPaneId)
+        }
+        const currentPaneIndicators = this.getIndicatorsByPaneId(currentPaneId)
+        if (!currentPaneIndicators.some(ins => ins.id === indicator.id)) {
+          currentPaneIndicators.push(indicator)
+          this._indicators.set(currentPaneId, currentPaneIndicators)
+        }
+        sortFlag = true
+      }
       const { calc, draw, sort } = indicator.shouldUpdateImp()
       if (sort) {
         sortFlag = true
@@ -1318,11 +1359,7 @@ export default class StoreImp implements Store {
       this._sortIndicators()
     }
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- ignore
-    if (updateFlag) {
-      this._chart.layout({ update: true })
-      return true
-    }
-    return false
+    return updateFlag || sortFlag
   }
 
   getOverlaysByFilter (filter: OverlayFilter): OverlayImp[] {

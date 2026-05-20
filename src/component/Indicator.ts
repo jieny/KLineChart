@@ -19,7 +19,7 @@ import type { KLineData, NeighborData } from '../common/Data'
 import type Bounding from '../common/Bounding'
 import type BarSpace from '../common/BarSpace'
 import type Crosshair from '../common/Crosshair'
-import type { IndicatorStyle, IndicatorPolygonStyle, SmoothLineStyle, RectStyle, TextStyle, TooltipFeatureStyle, LineStyle, LineType, TooltipLegend } from '../common/Styles'
+import type { IndicatorStyle, IndicatorPolygonStyle, SmoothLineStyle, RectStyle, TextStyle, TooltipFeatureStyle, LineType, TooltipLegend } from '../common/Styles'
 import { isNumber, isValid, merge, isBoolean, isString, clone, isFunction } from '../common/utils/typeChecks'
 import type { DataLoadType } from '../common/DataLoader'
 
@@ -32,12 +32,14 @@ import type { ArcAttrs } from '../extension/figure/arc'
 import type { RectAttrs } from '../extension/figure/rect'
 import type { TextAttrs } from '../extension/figure/text'
 import type { Chart } from '../Chart'
+import type { LineAttrs } from '../extension/figure/line'
+import { DEFAULT_AXIS_ID } from './Axis'
 
 export type IndicatorSeries = 'normal' | 'price' | 'volume'
 
 export type IndicatorFigureStyle = Partial<Omit<SmoothLineStyle, 'style'>> & Partial<Omit<RectStyle, 'style'>> & Partial<TextStyle> & Partial<{ style: LineType[keyof LineType] }> & Record<string, unknown>
 
-export type IndicatorFigureAttrs = Partial<ArcAttrs> & Partial<LineStyle> & Partial<RectAttrs> & Partial<TextAttrs> & Record<string, unknown>
+export type IndicatorFigureAttrs = Partial<ArcAttrs> & Partial<LineAttrs> & Partial<RectAttrs> & Partial<TextAttrs> & Record<string, unknown>
 
 export interface IndicatorFigureAttrsCallbackParams<D> {
   data: NeighborData<Nullable<D>>
@@ -51,11 +53,12 @@ export interface IndicatorFigureAttrsCallbackParams<D> {
 export interface IndicatorFigureStylesCallbackParams<D> {
   data: NeighborData<Nullable<D>>
   indicator: Indicator<D>
+  barSpace: BarSpace
   defaultStyles?: IndicatorStyle
 }
 
-export type IndicatorFigureAttrsCallback<D> = (params: IndicatorFigureAttrsCallbackParams<D>) => IndicatorFigureAttrs
-export type IndicatorFigureStylesCallback<D> = (params: IndicatorFigureStylesCallbackParams<D>) => IndicatorFigureStyle
+export type IndicatorFigureAttrsCallback<D> = (params: IndicatorFigureAttrsCallbackParams<D>) => Nullable<IndicatorFigureAttrs>
+export type IndicatorFigureStylesCallback<D> = (params: IndicatorFigureStylesCallbackParams<D>) => Nullable<IndicatorFigureStyle>
 
 export interface IndicatorFigure<D = unknown> {
   key: string
@@ -122,6 +125,11 @@ export interface Indicator<D = unknown, C = unknown, E = unknown> {
    * Pane id
    */
   paneId: string
+
+  /**
+   * Y-axis id
+   */
+  yAxisId: string
 
   /**
    * Indicator name
@@ -224,11 +232,11 @@ export interface Indicator<D = unknown, C = unknown, E = unknown> {
   result: D[]
 }
 
-export type IndicatorTemplate<D = unknown, C = unknown, E = unknown> = ExcludePickPartial<Omit<Indicator<D, C, E>, 'result' | 'paneId'>, 'name' | 'calc'>
+export type IndicatorTemplate<D = unknown, C = unknown, E = unknown> = ExcludePickPartial<Omit<Indicator<D, C, E>, 'result' | 'paneId' | 'yAxisId'>, 'name' | 'calc'>
 
-export type IndicatorCreate<D = unknown, C = unknown, E = unknown> = ExcludePickPartial<Omit<Indicator<D, C, E>, 'result'>, 'name'>
+export type IndicatorCreate<D = unknown, C = unknown, E = unknown> = ExcludePickPartial<Omit<Indicator<D, C, E>, 'result' | 'paneId' | 'yAxisId'>, 'name'>
 
-export type IndicatorOverride<D = unknown, C = unknown, E = unknown> = Partial<Omit<Indicator<D, C, E>, 'result'>>
+export type IndicatorOverride<D = unknown, C = unknown, E = unknown> = Partial<Omit<Indicator<D, C, E>, 'result' | 'yAxisId'>>
 
 export type IndicatorFilter = Partial<Pick<Indicator, 'id' | 'paneId' | 'name'>>
 
@@ -239,12 +247,16 @@ export type EachFigureCallback<D> = (figure: IndicatorFigure<D>, figureStyles: I
 export function eachFigures<D = unknown> (
   indicator: Indicator,
   dataIndex: number,
+  barSpace: BarSpace,
   defaultStyles: IndicatorStyle,
   eachFigureCallback: EachFigureCallback<D>
 ): void {
   const result = indicator.result
   const figures = indicator.figures
   const styles = indicator.styles
+
+  const textStyles = formatValue(styles, 'texts', defaultStyles.texts) as TextStyle[]
+  const textStyleCount = textStyles.length
 
   const circleStyles = formatValue(styles, 'circles', defaultStyles.circles) as IndicatorPolygonStyle[]
   const circleStyleCount = circleStyles.length
@@ -255,6 +267,7 @@ export function eachFigures<D = unknown> (
   const lineStyles = formatValue(styles, 'lines', defaultStyles.lines) as SmoothLineStyle[]
   const lineStyleCount = lineStyles.length
 
+  let textCount = 0
   let circleCount = 0
   let barCount = 0
   let lineCount = 0
@@ -264,6 +277,12 @@ export function eachFigures<D = unknown> (
   let figureIndex = 0
   figures.forEach(figure => {
     switch (figure.type) {
+      case 'text': {
+        figureIndex = textCount
+        defaultFigureStyles = textStyles[textCount % textStyleCount]
+        textCount++
+        break
+      }
       case 'circle': {
         figureIndex = circleCount
         const styles = circleStyles[circleCount % circleStyleCount]
@@ -294,6 +313,7 @@ export function eachFigures<D = unknown> (
           next: result[dataIndex + 1]
         },
         indicator,
+        barSpace,
         defaultStyles
       })
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- ignore
@@ -305,6 +325,7 @@ export function eachFigures<D = unknown> (
 export default class IndicatorImp<D = unknown, C = unknown, E = unknown> implements Indicator<D, C, E> {
   id: string
   paneId: string
+  yAxisId = DEFAULT_AXIS_ID
   name: string
   shortName: string
   precision = 4
@@ -325,6 +346,8 @@ export default class IndicatorImp<D = unknown, C = unknown, E = unknown> impleme
       prev.calc !== current.calc
     const draw = calc ||
       prev.shortName !== current.shortName ||
+      prev.paneId !== current.paneId ||
+      prev.yAxisId !== current.yAxisId ||
       prev.series !== current.series ||
       prev.minValue !== current.minValue ||
       prev.maxValue !== current.maxValue ||

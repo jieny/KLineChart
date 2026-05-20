@@ -12,8 +12,6 @@
  * limitations under the License.
  */
 
-import type { AxisCreate } from '../component/Axis'
-
 export type PaneState = 'normal' | 'maximize' | 'minimize'
 
 export interface PaneOptions {
@@ -22,8 +20,7 @@ export interface PaneOptions {
   minHeight?: number
   dragEnabled?: boolean
   order?: number
-  state?: PaneState,
-  axis?: Partial<AxisCreate>
+  state?: PaneState
 }
 
 export const PANE_MIN_HEIGHT = 30

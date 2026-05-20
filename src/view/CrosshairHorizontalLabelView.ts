@@ -19,7 +19,7 @@ import { isString } from '../common/utils/typeChecks'
 import { createFont } from '../common/utils/canvas'
 import { SymbolDefaultPrecisionConstants } from '../common/SymbolInfo'
 
-import type { Axis } from '../component/Axis'
+import { DEFAULT_AXIS_ID, type Axis } from '../component/Axis'
 import type YAxis from '../component/YAxis'
 
 import type { TextAttrs } from '../extension/figure/text'
@@ -27,6 +27,7 @@ import type { TextAttrs } from '../extension/figure/text'
 import type ChartStore from '../Store'
 
 import View from './View'
+import type YAxisWidget from '../widget/YAxisWidget'
 
 export default class CrosshairHorizontalLabelView<C extends Axis = YAxis> extends View<C> {
   override drawImp (ctx: CanvasRenderingContext2D): void {
@@ -41,7 +42,9 @@ export default class CrosshairHorizontalLabelView<C extends Axis = YAxis> extend
         const textStyles = directionStyles.text
         if (directionStyles.show && textStyles.show) {
           const bounding = widget.getBounding()
-          const axis = pane.getAxisComponent()
+          const axis = 'getAxisComponent' in widget
+            ? (widget as unknown as YAxisWidget).getAxisComponent()
+            : pane.getYAxisComponentById()
           const text = this.getText(crosshair, chartStore, axis)
           ctx.font = createFont(textStyles.size, textStyles.weight, textStyles.family)
           this.createFigure({
@@ -67,10 +70,10 @@ export default class CrosshairHorizontalLabelView<C extends Axis = YAxis> extend
     const value = axis.convertFromPixel(crosshair.y!)
     let precision = 0
     let shouldFormatBigNumber = false
-    if (yAxis.isInCandle()) {
+    if (yAxis.isInCandle() && yAxis.id === DEFAULT_AXIS_ID) {
       precision = chartStore.getSymbol()?.pricePrecision ?? SymbolDefaultPrecisionConstants.PRICE
     } else {
-      const indicators = chartStore.getIndicatorsByPaneId(crosshair.paneId!)
+      const indicators = chartStore.getIndicatorsByPaneId(crosshair.paneId!).filter(indicator => indicator.yAxisId === yAxis.id)
       indicators.forEach(indicator => {
         precision = Math.max(indicator.precision, precision)
         shouldFormatBigNumber ||= indicator.shouldFormatBigNumber

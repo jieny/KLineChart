@@ -13,31 +13,34 @@
  */
 
 import type DeepRequired from '../common/DeepRequired'
+import type PickRequired from '../common/PickRequired'
+
+import { createDom } from '../common/utils/dom'
+import { getPixelRatio } from '../common/utils/canvas'
+
 import type Nullable from '../common/Nullable'
 import type { UpdateLevel } from '../common/Updater'
 import type Bounding from '../common/Bounding'
 
-import { isValid, merge } from '../common/utils/typeChecks'
+import { isBoolean, isNumber, isValid, merge } from '../common/utils/typeChecks'
 
-import type { Axis } from '../component/Axis'
+import { DEFAULT_AXIS_ID, type Axis } from '../component/Axis'
+import type YAxisImp from '../component/YAxis'
+import type { YAxis, YAxisOverride } from '../component/YAxis'
 
 import type DrawWidget from '../widget/DrawWidget'
 import type YAxisWidget from '../widget/YAxisWidget'
 
-import Pane from './Pane'
 import { type PaneOptions, PANE_DEFAULT_HEIGHT, PANE_MIN_HEIGHT, PaneIdConstants } from './types'
+import Pane from './Pane'
 
 import type Chart from '../Chart'
 
-import { createDom } from '../common/utils/dom'
-import { getPixelRatio } from '../common/utils/canvas'
-import YAxisImp, { type YAxis } from '../component/YAxis'
-
 export default abstract class DrawPane<C extends Axis = Axis> extends Pane {
   private readonly _mainWidget: DrawWidget<DrawPane<C>>
-  private readonly _yAxisWidget: Nullable<YAxisWidget> = null
-
-  private _axis: C
+  private readonly _yAxisWidgets = new Map<string, YAxisWidget>()
+  private readonly _yAxisComponents = new Map<string, YAxis>()
+  private _yAxesBounding: Record<string, Partial<Bounding>> = {}
 
   private readonly _options: DeepRequired<PaneOptions> = {
     id: '',
@@ -45,62 +48,130 @@ export default abstract class DrawPane<C extends Axis = Axis> extends Pane {
     dragEnabled: true,
     order: 0,
     height: PANE_DEFAULT_HEIGHT,
-    state: 'normal',
-    axis: { name: 'normal', scrollZoomEnabled: true }
+    state: 'normal'
   }
 
-  constructor (chart: Chart, id: string, options: Omit<PaneOptions, 'id' | 'height'>) {
-    super(chart, id)
+  constructor (chart: Chart, options: PickRequired<PaneOptions, 'id'>) {
+    super(chart, options.id)
     const container = this.getContainer()
     this._mainWidget = this.createMainWidget(container)
-    this._yAxisWidget = this.createYAxisWidget(container)
     this.setOptions(options)
   }
 
   setOptions (options: PaneOptions): this {
-    const paneId = this.getId()
-    if (paneId === PaneIdConstants.CANDLE || paneId === PaneIdConstants.X_AXIS) {
-      const axisName = options.axis?.name
-      if (
-        !isValid(this._axis) ||
-        (isValid(axisName) && this._options.axis.name !== axisName)
-      ) {
-        this._axis = this.createAxisComponent(axisName ?? 'normal')
-      }
-    } else {
-      if (!isValid(this._axis)) {
-        this._axis = this.createAxisComponent('normal')
-      }
-    }
-    if (this._axis instanceof YAxisImp) {
-      this._axis.setAutoCalcTickFlag(true)
-    }
     merge(this._options, options)
-    this._axis.override({
-      ...this._options.axis,
-      name: options.axis?.name ?? 'normal'
-    })
+    if (isNumber(options.height) && options.height > 0) {
+      this.setBounding({ height: this._options.height })
+    }
+    return this
+  }
+
+  protected setAxisCursor (scrollZoomEnabled?: boolean, yAxisId?: string): void {
     let container: Nullable<HTMLElement> = null
     let cursor = 'default'
     if (this.getId() === PaneIdConstants.X_AXIS) {
       container = this.getMainWidget().getContainer()
       cursor = 'ew-resize'
     } else {
-      container = this.getYAxisWidget()!.getContainer()
+      container = this.getYAxisWidgetById(yAxisId)?.getContainer() ?? null
       cursor = 'ns-resize'
     }
-    if (options.axis?.scrollZoomEnabled ?? true) {
+    if (!isValid(container) || !isBoolean(scrollZoomEnabled)) {
+      return
+    }
+    if (scrollZoomEnabled) {
       container.style.cursor = cursor
     } else {
       container.style.cursor = 'default'
     }
-    return this
+  }
+
+  createYAxis (axis: YAxisOverride): YAxis {
+    const yAxisId = axis.id ?? DEFAULT_AXIS_ID
+    const yAxisName = axis.name ?? 'normal'
+    const needWidget = axis.needWidget ?? true
+    let yAxis = this._yAxisComponents.get(yAxisId)
+    const shouldCreateYAxis = !isValid(yAxis) || (isValid(axis.name) && yAxis.name !== axis.name)
+    if (shouldCreateYAxis) {
+      this._yAxisWidgets.get(yAxisId)?.destroy()
+      this._yAxisWidgets.delete(yAxisId)
+      yAxis = this.createYAxisComponent(yAxisName)
+      yAxis.id = yAxisId
+      yAxis.paneId = this.getId()
+      this._yAxisComponents.set(yAxisId, yAxis)
+      if (needWidget) {
+        const yAxisWidget = this.createYAxisWidget(this.getContainer(), yAxis)
+        if (isValid(yAxisWidget)) {
+          this._yAxisWidgets.set(yAxisId, yAxisWidget)
+        }
+      }
+    }
+    if (!isValid(yAxis)) {
+      throw new Error('create yAxis failed.')
+    }
+    ;(yAxis as unknown as YAxisImp).setAutoCalcTickFlag(true)
+    yAxis.override({
+      ...axis,
+      name: yAxisName
+    })
+    this.setAxisCursor(yAxis.scrollZoomEnabled, yAxisId)
+    return yAxis
   }
 
   getOptions (): DeepRequired<PaneOptions> { return this._options }
 
-  getAxisComponent (): C {
-    return this._axis
+  getYAxisComponents (): YAxis[] {
+    return Array.from(this._yAxisComponents.values())
+  }
+
+  getWidgetYAxisComponents (): YAxis[] {
+    return Array.from(this._yAxisWidgets.keys()).map(id => this._yAxisComponents.get(id)!)
+  }
+
+  hasYAxisComponent (yAxisId: string): boolean {
+    return this._yAxisComponents.has(yAxisId)
+  }
+
+  removeYAxis (yAxisId: string): boolean {
+    const yAxis = this._yAxisComponents.get(yAxisId)
+    if (!isValid(yAxis)) {
+      return false
+    }
+    this._yAxisComponents.delete(yAxisId)
+    const yAxisWidget = this._yAxisWidgets.get(yAxisId)
+    if (isValid(yAxisWidget)) {
+      yAxisWidget.destroy()
+      this._yAxisWidgets.delete(yAxisId)
+    }
+    this._yAxesBounding = Object.keys(this._yAxesBounding).reduce<Record<string, Partial<Bounding>>>((bounding, id) => {
+      if (id !== yAxisId) {
+        bounding[id] = this._yAxesBounding[id]
+      }
+      return bounding
+    }, {})
+    return true
+  }
+
+  private _getDefaultYAxisId (): Nullable<string> {
+    if (this._yAxisComponents.has(DEFAULT_AXIS_ID)) {
+      return DEFAULT_AXIS_ID
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- ignore
+    return this._yAxisComponents.keys().next().value ?? null
+  }
+
+  getYAxisComponentById (yAxisId?: string): YAxis {
+    const id = yAxisId ?? this._getDefaultYAxisId()
+    return this._yAxisComponents.get(id!)!
+  }
+
+  getYAxisWidgetById (yAxisId?: string): Nullable<YAxisWidget> {
+    const id = yAxisId ?? this._getDefaultYAxisId()
+    return isValid(id) ? this._yAxisWidgets.get(id) ?? null : null
+  }
+
+  setYAxesBounding (bounding: Record<string, Partial<Bounding>>): void {
+    this._yAxesBounding = bounding
   }
 
   override setBounding (
@@ -122,42 +193,50 @@ export default abstract class DrawPane<C extends Axis = Axis> extends Pane {
     if (mainBoundingValid) {
       this._mainWidget.setBounding(mainBounding)
     }
-    if (isValid(this._yAxisWidget)) {
-      this._yAxisWidget.setBounding(contentBounding)
-      const yAxis = this._axis as unknown as YAxis
-      if (yAxis.position === 'left') {
-        if (isValid(leftYAxisBounding)) {
-          this._yAxisWidget.setBounding({ ...leftYAxisBounding, left: 0 })
+    if (this._yAxisWidgets.size > 0) {
+      this._yAxisWidgets.forEach((yAxisWidget, yAxisId) => {
+        yAxisWidget.setBounding(contentBounding)
+        if (isValid(this._yAxesBounding[yAxisId])) {
+          yAxisWidget.setBounding(this._yAxesBounding[yAxisId])
+          return
         }
-      } else {
-        if (isValid(rightYAxisBounding)) {
-          this._yAxisWidget.setBounding(rightYAxisBounding)
-          if (mainBoundingValid) {
-            this._yAxisWidget.setBounding({
-              left: (mainBounding.left ?? 0) +
-                (mainBounding.width ?? 0) +
-                (mainBounding.right ?? 0) -
-                (rightYAxisBounding.width ?? 0)
-            })
+        const yAxis = this.getYAxisComponentById(yAxisId)
+        if (yAxis.position === 'left') {
+          if (isValid(leftYAxisBounding)) {
+            yAxisWidget.setBounding({ ...leftYAxisBounding, left: 0 })
+          }
+        } else {
+          if (isValid(rightYAxisBounding)) {
+            yAxisWidget.setBounding(rightYAxisBounding)
+            if (mainBoundingValid) {
+              yAxisWidget.setBounding({
+                left: (mainBounding.left ?? 0) +
+                  (mainBounding.width ?? 0) +
+                  (mainBounding.right ?? 0) -
+                  (rightYAxisBounding.width ?? 0)
+              })
+            }
           }
         }
-      }
+      })
     }
     return this
   }
 
   getMainWidget (): DrawWidget<DrawPane<C>> { return this._mainWidget }
 
-  getYAxisWidget (): Nullable<YAxisWidget> { return this._yAxisWidget }
+  getYAxisWidget (): Nullable<YAxisWidget> { return this.getYAxisWidgetById() }
+
+  getYAxisWidgets (): YAxisWidget[] { return Array.from(this._yAxisWidgets.values()) }
 
   override updateImp (level: UpdateLevel): void {
     this._mainWidget.update(level)
-    this._yAxisWidget?.update(level)
+    this._yAxisWidgets.forEach(widget => { widget.update(level) })
   }
 
   destroy (): void {
     this._mainWidget.destroy()
-    this._yAxisWidget?.destroy()
+    this._yAxisWidgets.forEach(widget => { widget.destroy() })
   }
 
   override getImage (includeOverlay: boolean): HTMLCanvasElement {
@@ -179,20 +258,22 @@ export default abstract class DrawPane<C extends Axis = Axis> extends Pane {
       mainBounding.left, 0,
       mainBounding.width, mainBounding.height
     )
-    if (this._yAxisWidget !== null) {
-      const yAxisBounding = this._yAxisWidget.getBounding()
+    this._yAxisWidgets.forEach(yAxisWidget => {
+      const yAxisBounding = yAxisWidget.getBounding()
       ctx.drawImage(
-        this._yAxisWidget.getImage(includeOverlay),
+        yAxisWidget.getImage(includeOverlay),
         yAxisBounding.left, 0,
         yAxisBounding.width, yAxisBounding.height
       )
-    }
+    })
     return canvas
   }
 
-  protected abstract createAxisComponent (name: string): C
+  protected createYAxisComponent (_name: string): YAxis {
+    throw new Error('createYAxisComponent is not implemented.')
+  }
 
-  protected createYAxisWidget (_container: HTMLElement): Nullable<YAxisWidget> { return null }
+  protected createYAxisWidget (_container: HTMLElement, _yAxis: YAxis): Nullable<YAxisWidget> { return null }
 
   protected abstract createMainWidget (container: HTMLElement): DrawWidget<DrawPane<C>>
 }

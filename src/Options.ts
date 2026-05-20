@@ -15,8 +15,9 @@
 import type { KLineData } from './common/Data'
 import type DeepPartial from './common/DeepPartial'
 import type { Styles } from './common/Styles'
-
+import type { AxisPosition } from './component/Axis'
 import type { IndicatorCreate } from './component/Indicator'
+import type { YAxisOverride } from './component/YAxis'
 import type { PaneOptions } from './pane/types'
 
 export type FormatDateType = 'tooltip' | 'crosshair' | 'xAxis'
@@ -67,14 +68,6 @@ export interface Locales {
   [key: string]: string
 }
 
-export type LayoutChildType = 'candle' | 'indicator' | 'xAxis'
-
-export interface LayoutChild {
-  type: LayoutChildType
-  content?: Array<string | IndicatorCreate>
-  options?: PaneOptions
-}
-
 export interface DecimalFold {
   threshold: number
   format: (value: string | number) => string
@@ -92,6 +85,33 @@ export interface ZoomAnchor {
   xAxis: ZoomAnchorType
 }
 
+export interface LayoutBasicParams {
+  barSpaceLimitMin?: number
+  barSpaceLimitMax?: number
+  yAxisPosition?: AxisPosition
+  yAxisInside?: boolean
+  paneMinHeight?: number
+  paneHeight?: number
+}
+
+export interface LayoutPaneContentChildMultipleParams {
+  indicator: string | IndicatorCreate
+  yAxis?: Omit<YAxisOverride, 'paneId'>
+}
+
+export type LayoutPaneContentChild = LayoutPaneContentChildMultipleParams | string | IndicatorCreate
+
+export interface LayoutPane {
+  type: 'candle' | 'indicator' | 'xAxis'
+  content?: LayoutPaneContentChild[]
+  options?: PaneOptions
+}
+
+export interface Layout {
+  basicParams?: LayoutBasicParams
+  panes?: LayoutPane[]
+}
+
 export interface Options {
   locale?: string
   timezone?: string
@@ -100,5 +120,5 @@ export interface Options {
   thousandsSeparator?: Partial<ThousandsSeparator>
   decimalFold?: Partial<DecimalFold>
   zoomAnchor?: ZoomAnchorType | Partial<ZoomAnchor>
-  layout?: LayoutChild[]
+  layout?: Layout
 }

@@ -1,5 +1,23 @@
 # 📠 Change Log
 
+## 10.0.0-beta2
+`2026-05-20`
++ 🆕 New Features
+  + Support multiple y-axes. Multiple y-axes can be created in the same pane, and indicators can be bound to a specified y-axis through `yAxisId`.
+  + Add instance methods `overrideXAxis(options)` and `overrideYAxis(options)` for independently configuring the x-axis and y-axis.
+  + The chart now supports automatically listening to container size changes and calling `resize()`.
+  + Add the `text` type to indicator figures, allowing indicator `figures` to draw text directly.
+
++ 👉 Changes
+  + In the chart method `init(ds, options)`, `options.layout` has been changed from an array structure to an object structure, with `basicParams` and `panes` added:
+    + `basicParams` supports configuring `barSpaceLimitMin`, `barSpaceLimitMax`, `yAxisPosition`, `yAxisInside`, `paneMinHeight`, and `paneHeight`.
+    + `panes` is used to configure pane layout, and pane content supports specifying a y-axis configuration for an indicator through `{ indicator, yAxis }`.
+  + The instance method `createIndicator(indicator, isStack?, paneOptions?)` has been changed to `createIndicator(indicator, options?)`, and `options` supports `isStack`, `pane`, and `yAxis`.
+  + `setPaneOptions(options)` no longer includes axis configuration. Use `overrideXAxis(options)` or `overrideYAxis(options)` for axis configuration.
+  + Add `yAxisId` to the `filter` parameter of `convertToPixel(value, filter?)` and `convertFromPixel(coordinate, filter?)`.
++ 🐞 Fixed the parameter type error of the instance API `setZoomAnchor`.
++ 💄 Optimized the build process. The build tool has been changed from rollup to Vite, and `type-check` has been added.
+
 ## 10.0.0-beta1
 `2025-11-21`
 + 🆕 New Features
@@ -29,7 +47,7 @@
   + In the instance method, remove `getIndicatorByPaneId(paneId, name)`. Replace it with `getIndicators(filter)`.
   + In the instance method, remove `getOverlayById(id)`. Replace it with `getOverlays(filter)`.
   + In the instance methods `subscribeAction` and `unsubscribeAction`, remove the parameter `onTooltipIconClick`. Replace it with `onCandleTooltipFeatureClick` and `onIndicatorTooltipFeatureClick`.
-  + The style configuration removes `yAxis.position`, `yAxis.type`, `yAxis.inside`, and `yAxis.inside`. Please use the properties in the `axis` section of the window configuration instead. For details, see the chart API `[init(dcs, options)](/api/chart/init#parameters)`, the instance APIs `[createIndicator(value, isStack, paneOptions)](/api/instance/createIndicator#parameters)`, and `[setPaneOptions(options)](/api/instance/setPaneOptions#parameters)`.
+  + The style configuration removes `yAxis.position`, `yAxis.type`, `yAxis.inside`, and `yAxis.inside`. Please use `[overrideYAxis(options)](/api/instance/overrideYAxis#parameters)` instead. For details, see the chart API `[init(dcs, options)](/api/chart/init#parameters)`, the instance APIs `[createIndicator(indicator, options)](/api/instance/createIndicator#parameters)`, `[setPaneOptions(options)](/api/instance/setPaneOptions#parameters)`, and `[overrideYAxis(options)](/api/instance/overrideYAxis#parameters)`.
   + In style configuration, remove `candle.tooltip.defaultValue` and replace `candle.tooltip.custom` with `candle.tooltip.legend`. Also remove `candle.tooltip.text`, `indicator.tooltip.showName`, and `indicator.tooltip.showParams`; use `indicator.tooltip.title` instead. Remove `indicator.tooltip.defaultValue` and replace it with `indicator.tooltip.legend`. Also remove `indicator.tooltip.text` and `overlay.rectText`.
   + In built-in basic graphics, remove `rectText` and replace it with `text`.
 

@@ -6,13 +6,13 @@ import { nextTick, provide, onMounted, ref } from 'vue'
 import Banner from './Banner.vue'
 import HomeHero from './home/hero/index.vue'
 import HomeTopSponsor from './home/TopSponsor.vue'
-import HomeCreateChart from './home/create-chart/index.vue'
-import HomeFAQ from './home/faq/index.vue'
+import HomeUseCases from './home/UseCases.vue'
+import HomeCoreAdvantages from './home/CoreAdvantages.vue'
+import HomeUsers from './home/Users.vue'
 import HomeSponsor from './home/Sponsor.vue'
 // import AsideSponsor from './AsideSponsor.vue'
 import NotFound from './NotFound.vue'
 import ColorPalette from './ColorPalette.vue'
-import Loading from '../@components/Loading.vue'
 
 const { isDark } = useData()
 
@@ -50,6 +50,7 @@ provide('toggle-appearance', async ({ clientX: x, clientY: y }) => {
     {
       duration: 300,
       easing: 'ease-in',
+      fill: 'forwards',
       pseudoElement: `::view-transition-${isDark.value ? 'old' : 'new'}(root)`
     }
   )
@@ -57,18 +58,18 @@ provide('toggle-appearance', async ({ clientX: x, clientY: y }) => {
 </script>
 
 <template>
-  <Loading v-if="!mounted" className="page-loading"/>
-  <DefaultTheme.Layout v-show="mounted">
-    <template #layout-top>
+  <DefaultTheme.Layout>
+    <!-- <template #layout-top>
       <Banner/>
-    </template>
+    </template> -->
     <template #home-hero-before>
       <HomeHero/>
       <HomeTopSponsor/>
     </template>
     <template #home-features-after>
-      <HomeCreateChart/>
-      <HomeFAQ/>
+      <HomeUseCases/>
+      <HomeCoreAdvantages/>
+      <HomeUsers/>
       <HomeSponsor/>
     </template>
     <!-- <template #aside-bottom>
@@ -113,5 +114,6 @@ provide('toggle-appearance', async ({ clientX: x, clientY: y }) => {
   width: 100vw!important;
   height: 100vh!important;
   color: var(--vp-c-text-1)!important;
+  background-color: var(--vp-c-bg)!important;
 }
 </style>
