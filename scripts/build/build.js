@@ -6,8 +6,8 @@ import { createBuildConfig, version, env } from './config.js'
 
 function checkInput (index) {
   if (index.endsWith('.ts')) {
-    execFileSync('pnpm', ['code-lint'], { stdio: 'inherit' })
-    execFileSync('pnpm', ['type-check'], { stdio: 'inherit' })
+    execFileSync('pnpm', ['code-lint'], { stdio: 'inherit', shell: true })
+    execFileSync('pnpm', ['type-check'], { stdio: 'inherit', shell: true })
   }
 }
 
