@@ -38,7 +38,7 @@ import type { DataLoader, DataLoaderGetBarsParams, DataLoadMore, DataLoadType } 
 
 import type { Options, Formatter, ThousandsSeparator, DecimalFold, FormatDateType, FormatDateParams, FormatBigNumber, FormatExtendText, FormatExtendTextParams, ZoomAnchor, ZoomAnchorType, LayoutBasicParams } from './Options'
 
-import type { IndicatorOverride, IndicatorCreate, IndicatorFilter, Indicator } from './component/Indicator'
+import type { IndicatorOverride, IndicatorFilter, Indicator } from './component/Indicator'
 import type IndicatorImp from './component/Indicator'
 import { getIndicatorClass } from './extension/indicator/index'
 
@@ -126,7 +126,7 @@ export interface Store {
   getVisibleRange: () => VisibleRange
   test:() => void
   setDataLoader: (dataLoader: DataLoader) => void
-  overrideIndicator: (override: IndicatorCreate) => boolean
+  overrideIndicator: (override: IndicatorOverride) => boolean
   removeIndicator: (filter?: IndicatorFilter) => boolean
   overrideOverlay: (override: Partial<OverlayCreate>) => boolean
   removeOverlay: (filter?: OverlayFilter) => boolean
