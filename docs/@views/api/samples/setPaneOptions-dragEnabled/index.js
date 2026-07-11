@@ -2,7 +2,7 @@ import { init } from 'klinecharts'
 
 const chart = init('setPaneOptions-dragEnabled-chart')
 const paneId = 'macd_pane'
-chart.createIndicator('MACD', { pane: { id: paneId } })
+chart.createIndicator({ name: 'MACD', paneId })
 
 chart.setPaneOptions({
   id: paneId,

@@ -3,29 +3,28 @@
   ds: string | HTMLElement,
   options?: {
     layout?: {
-      basicParams?: {
-        barSpaceLimitMin?: number
-        barSpaceLimitMax?: number
-        yAxisPosition?: 'left' | 'right'
-        yAxisInside?: boolean
-        paneMinHeight?: number
-        paneHeight?: number
+      barSpaceLimit?: {
+        min?: number
+        max?: number
       }
-      panes?: Array<{
-        type: 'candle' | 'indicator' | 'xAxis'
-        content?: Array<string | IndicatorCreate | {
-          indicator: string | IndicatorCreate
-          yAxis?: Omit<YAxisOverride, 'paneId'>
-        }>
-        options?: {
-          id?: string
-          height?: number
-          minHeight?: number
-          dragEnabled?: boolean
-          order?: number
-          state?: 'normal' | 'maximize' | 'minimize'
+      pane?: {
+        height?: number
+        minHeight?: number
+        dragEnabled?: boolean
+        order?: number
+        state?: 'normal' | 'maximize' | 'minimize'
+      }
+      yAxis?: {
+        reverse?: boolean
+        inside?: boolean
+        needWidget?: boolean
+        position?: 'left' | 'right'
+        scrollZoomEnabled?: boolean
+        gap?: {
+          top?: number
+          bottom?: number
         }
-      }>
+      }
     }
     locale?: string
     styles?: string | DeepPartial<Styles>
@@ -53,6 +52,10 @@
       format?: (value: number | string) => string
     }
     zoomAnchor?: 'cursor' | 'last_bar' | { main?: 'cursor' | 'last_bar', xAxis?: 'cursor' | 'last_bar' }
+    hotkey?: {
+      enabled?: boolean
+      exclude?: string[]
+    }
   }
 ) => Chart
 ```

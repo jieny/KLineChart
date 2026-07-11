@@ -18,3 +18,8 @@ export default interface BarSpace {
   gapBar: number
   halfGapBar: number
 }
+
+export interface BarSpaceLimit {
+  min: number
+  max: number
+}

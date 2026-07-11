@@ -4,7 +4,6 @@ outline: deep
 
 <script setup>
 import InitBasic from '../../@views/api/samples/init-basic/index.vue'
-import InitLayout from '../../@views/api/samples/init-layout/index.vue'
 import InitLocaleBuiltIn from '../../@views/api/samples/init-locale-built-in/index.vue'
 import InitLocaleExtension from '../../@views/api/samples/init-locale-extension/index.vue'
 import InitTimezone from '../../@views/api/samples/init-timezone/index.vue'
@@ -33,25 +32,24 @@ import Tip from '../../@components/Tip.vue'
 - `ds` 容器，可以是dom元素或者元素id。
 - `options` 可选配置项。
   - `layout` 自定义布局配置。
-    - `basicParams` 布局基础参数。
-      - `barSpaceLimitMin` 柱间距最小值。
-      - `barSpaceLimitMax` 柱间距最大值。
-      - `yAxisPosition` 默认 y 轴位置，支持 `left` 和 `right` 。
-      - `yAxisInside` 默认 y 轴是否在窗口内部。
-      - `paneMinHeight` 默认窗口最小高度。
-      - `paneHeight` 默认窗口高度。
-    - `panes` 自定义窗口列表。
-      - `type` 窗口类型，支持 `candle` ，`indicator` 和 `xAxis` 。
-      - `content` 窗口内容，仅支持指标。子项可以是指标名、指标配置，或 `{ indicator, yAxis }`。
-        - `indicator` 指标名或指标配置。
-        - `yAxis` 指标绑定的 y 轴配置，不需要传 `paneId` 。
-      - `options` 窗口配置。
-        - `id` 窗口id。
-        - `height` 高度。
-        - `minHeight` 最小高度。
-        - `dragEnabled` 是否可以拖拽调整高度。
-        - `order` 顺序。
-        - `state` 状态，支持 `normal` ， `maximize` 和 `minimize` 。
+    - `barSpaceLimit` 柱间距限制。
+      - `min` 柱间距最小值。
+      - `max` 柱间距最大值。
+    - `pane` 默认窗口配置。
+      - `height` 高度。
+      - `minHeight` 最小高度。
+      - `dragEnabled` 是否可以拖拽调整高度。
+      - `order` 顺序。
+      - `state` 状态，支持 `normal` ， `maximize` 和 `minimize` 。
+    - `yAxis` 默认 y 轴配置。
+      - `reverse` 是否反向。
+      - `inside` 是否在内部。
+      - `needWidget` 是否需要创建轴组件。
+      - `position` 位置，支持 `left` 和 `right` 。
+      - `scrollZoomEnabled` 是否允许在 Y 轴上滚动和缩放。
+      - `gap` 上下边距配置。
+        - `top` 上边距。
+        - `bottom` 下边距。
   - `locale` 语言，内置支持 `zh-CN` 和 `en-US` 。
   - `timezone` 时区名，如 `Asia/Shanghai` ，如果不设置会自动获取本机时区，时区对应名字列表请参阅 [时区列表](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List) 。
   - `styles` 可以是通过 `klinecharts.registerStyles` 注册的样式名，也可以是 `Styles` ， `Styles` 详情参阅 [样式](/guide/styles) ，支持增量。
@@ -66,6 +64,9 @@ import Tip from '../../@components/Tip.vue'
     - `threshold` 折叠阈值。
     - `format` 自定义格式化方法。
   - `zoomAnchor` 缩放锚点位置，可以是 `last_bar` 、 `cursor` ，或分别配置主图和 x 轴的对象 `{ main, xAxis }`。
+  - `hotkey` 快捷键配置。
+    - `enabled` 是否启用快捷键。
+    - `exclude` 排除的全局快捷键名称列表。
 
 ### 返回值 {#returns}
 `init` 返回一个图表实例对象 `Chart`。
@@ -74,9 +75,6 @@ import Tip from '../../@components/Tip.vue'
 
 ### 基本使用 {#basic}
 <InitBasic/>
-
-### 自定义布局 {#layout}
-<InitLayout />
 
 ### 内置语言 {#init-locale-built-in}
 <InitLocaleBuiltIn />

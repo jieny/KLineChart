@@ -1,55 +1,71 @@
 # 📠 Change Log
 
-## 10.0.0-beta2
-`2026-05-20`
-+ 🆕 New Features
-  + Support multiple y-axes. Multiple y-axes can be created in the same pane, and indicators can be bound to a specified y-axis through `yAxisId`.
-  + Add instance methods `overrideXAxis(options)` and `overrideYAxis(options)` for independently configuring the x-axis and y-axis.
-  + The chart now supports automatically listening to container size changes and calling `resize()`.
-  + Add the `text` type to indicator figures, allowing indicator `figures` to draw text directly.
+## 10.0.0
+`2026-07-11`
 
-+ 👉 Changes
-  + In the chart method `init(ds, options)`, `options.layout` has been changed from an array structure to an object structure, with `basicParams` and `panes` added:
-    + `basicParams` supports configuring `barSpaceLimitMin`, `barSpaceLimitMax`, `yAxisPosition`, `yAxisInside`, `paneMinHeight`, and `paneHeight`.
-    + `panes` is used to configure pane layout, and pane content supports specifying a y-axis configuration for an indicator through `{ indicator, yAxis }`.
-  + The instance method `createIndicator(indicator, isStack?, paneOptions?)` has been changed to `createIndicator(indicator, options?)`, and `options` supports `isStack`, `pane`, and `yAxis`.
-  + `setPaneOptions(options)` no longer includes axis configuration. Use `overrideXAxis(options)` or `overrideYAxis(options)` for axis configuration.
-  + Add `yAxisId` to the `filter` parameter of `convertToPixel(value, filter?)` and `convertFromPixel(coordinate, filter?)`.
-+ 🐞 Fixed the parameter type error of the instance API `setZoomAnchor`.
-+ 💄 Optimized the build process. The build tool has been changed from rollup to Vite, and `type-check` has been added.
+The current 10.x release is a major upgrade from 9.x. It reorganizes data loading, layout, axes, indicators, overlays, formatting, and style configuration.
 
-## 10.0.0-beta1
-`2025-11-21`
-+ 🆕 New Features
-  + Support thousands separators and custom decimal collapse.
-  + Support displaying future time on the x-axis.
-  + Support dragging the y-axis on mobile devices.
-  + Support creating multiple metrics with the same name on the same window.
-  + Rewrote the axis module; custom y-axis supports setting the range.
-  + Add `zoomAnchor` to the `options` method of the chart method `init(dom, options)`.
-  + New instance methods `setZoomAnchor(anchor)`, `getZoomAnchor()`, `setDataLoader(loader)`, `setSymbol(symbol)`, `getSymbol()`, `setPeriod(period)`, `getPeriod()`, `resetData()`, `setThousandsSeparator(thousandsSeparator)` , `getThousandsSeparator()` , `setDecimalFold(decimalFold)` , `getDecimalFold()` , `getIndicators()` and `getOverlays()` . 
-  + Add style configurations: `candle.priceMark.last.extendTexts`, `candle.tooltip.title`, `candle.tooltip.legend`, `indicator.tooltip.title`, `indicator.tooltip.legend`, `crosshair.horizontal.features`, `candle.bar.compareRule`, `indicator.ohlc.compareRule`, and `candle.priceMark.last.compareRule`.
-  + Add `onIndicatorTooltipFeatureClick` and `onCrosshairFeatureClick` to the `type` parameter in the instance methods `subscribeAction` and `unsubscribeAction`.
-+ 👉 Changes
-  + In the chart method `init(dcs, options)`, the `position` sub-item of `options.layout` has been changed to `order`, `options.thousandsSeparator` has been changed to the object `{ sign, format }`, `options.decimalFoldThreshold` has been changed to `options.decimalFold`, `options.customApi` has been changed to `options.formatter`, and the parameter of `formatDate` has been changed to an object.
-  + In the instance methods `setCustomApi` and `getCustomApi` have been changed to `getFormatter`, the return value of `getBarSpace()` has been changed to an object, the return value of `createIndicator` has been changed to return the indicator ID, and the input parameter `paneId` of `overlayIndicator` has been merged into the input parameter `indicator`.
-  + The return value of the custom metric `createTooltipDataSource` method has been changed from `values` to `legends`, and `icons` to `features`.
-  + The style configurations `candle.tooltip.icons` and `indicator.tooltip.icons` have been changed to `indicator.tooltip.features`.
-+ 💄 Optimizations
-  + Optimized the `figure` element in the overlay template to ignore event types, ensuring the event name matches the event name in `overlay`.
-  + Optimized the execution of metric calculation tasks.
-  + Optimized the triggering of scroll events on mobile devices.
+### New Features
++ 🆕 Support multiple y-axes. A pane can contain multiple y-axes, and indicators can bind to a specific axis with `indicator.yAxisId`.
++ 🆕 Add instance methods `createYAxis(yAxis)`, `removeYAxis(filter)`, `getYAxes(filter)`, `overrideYAxis(options)`, and `overrideXAxis(options)`.
++ 🆕 Support custom hotkeys, with the new `hotkey` option and APIs such as `setHotkey`, `getHotkey`, `registerHotkey`, and `getSupportedHotkeys`.
++ 🆕 Add continuous drawing mode for overlays, and add the built-in `brush` overlay.
++ 🆕 Support custom thousands separators and decimal-zero folding.
++ 🆕 Support zoom anchors with the `zoomAnchor` option and `setZoomAnchor(anchor)` / `getZoomAnchor()`.
++ 🆕 Add `setDataLoader(loader)` for historical data, realtime data, and backward loading.
++ 🆕 Add `setSymbol(symbol)`, `getSymbol()`, `setPeriod(period)`, and `getPeriod()`.
++ 🆕 Support future time on the x-axis.
++ 🆕 Support y-axis dragging on mobile.
++ 🆕 Support multiple indicators with the same name in the same pane.
++ 🆕 Rewrite the axis module. Custom y-axes can define ranges and ticks.
++ 🆕 Add the `text` figure type for indicators.
++ 🆕 Add `getIndicators(filter)` and `getOverlays(filter)`.
++ 🆕 Add style options including `candle.priceMark.last.extendTexts`, `candle.tooltip.title`, `candle.tooltip.legend`, `indicator.tooltip.title`, `indicator.tooltip.legend`, `crosshair.horizontal.features`, `candle.bar.compareRule`, `indicator.ohlc.compareRule`, and `candle.priceMark.last.compareRule`.
++ 🆕 Add `onIndicatorTooltipFeatureClick` and `onCrosshairFeatureClick` action types.
 
-+ 🗑 Deprecated
-  + The following chart methods have been removed: `utils.drawArc(ctx, arc, styles)`, `utils.drawCircle(ctx, circle, styles)`, `utils.drawLine(ctx, line, styles)`, `utils.drawPolygon(ctx, polygon, styles)`, `utils.drawRect(ctx, rect, styles)`, `utils.drawText(ctx, text, styles)`, `utils.drawRectText(ctx, rectText, styles)`. Please use `getFigureClass(name)` instead.
-  + The following instance method has been removed: `setPriceVolumePrecision(pricePrecision, volumePrecision)`. Please use `setPrecision(precision)` instead.
-  + In the instance API, remove `setLoadMoreData`, `applyNewData`, and `updateData`. Replace them with `setDataLoader`. Remove `clearData`, `setPrecision`, and `getPrecision`.
-  + In the instance method, remove `getIndicatorByPaneId(paneId, name)`. Replace it with `getIndicators(filter)`.
-  + In the instance method, remove `getOverlayById(id)`. Replace it with `getOverlays(filter)`.
-  + In the instance methods `subscribeAction` and `unsubscribeAction`, remove the parameter `onTooltipIconClick`. Replace it with `onCandleTooltipFeatureClick` and `onIndicatorTooltipFeatureClick`.
-  + The style configuration removes `yAxis.position`, `yAxis.type`, `yAxis.inside`, and `yAxis.inside`. Please use `[overrideYAxis(options)](/api/instance/overrideYAxis#parameters)` instead. For details, see the chart API `[init(dcs, options)](/api/chart/init#parameters)`, the instance APIs `[createIndicator(indicator, options)](/api/instance/createIndicator#parameters)`, `[setPaneOptions(options)](/api/instance/setPaneOptions#parameters)`, and `[overrideYAxis(options)](/api/instance/overrideYAxis#parameters)`.
-  + In style configuration, remove `candle.tooltip.defaultValue` and replace `candle.tooltip.custom` with `candle.tooltip.legend`. Also remove `candle.tooltip.text`, `indicator.tooltip.showName`, and `indicator.tooltip.showParams`; use `indicator.tooltip.title` instead. Remove `indicator.tooltip.defaultValue` and replace it with `indicator.tooltip.legend`. Also remove `indicator.tooltip.text` and `overlay.rectText`.
-  + In built-in basic graphics, remove `rectText` and replace it with `text`.
+### Changes
++ 👉 In `init(ds, options)`, `options.layout` is now a default layout configuration object:
+  + `layout.barSpaceLimit` configures bar-space limits.
+  + `layout.pane` configures default pane options.
+  + `layout.yAxis` configures default y-axis options.
++ 👉 `createIndicator(indicator, options?)` is adjusted to `createIndicator(indicator, isStack?)`. Use `indicator.paneId` for pane placement and `indicator.yAxisId` for y-axis binding.
++ 👉 `setPaneOptions(options)` only configures pane options. Use `overrideXAxis(options)`, `overrideYAxis(options)`, or the multi-y-axis APIs for axis configuration.
++ 👉 Add `yAxisId` to the `filter` parameter of `convertToPixel(value, filter?)` and `convertFromPixel(coordinate, filter?)`.
++ 👉 `options.customApi` is renamed to `options.formatter`; `setCustomApi` is renamed to `setFormatter`; `getCustomApi` is renamed to `getFormatter`.
++ 👉 `formatDate(dateTimeFormat, timestamp, format, type)` is changed to `formatDate({ dateTimeFormat, timestamp, template, type })`.
++ 👉 `options.thousandsSeparator` is changed to an object `{ sign, format }`.
++ 👉 `options.decimalFoldThreshold` is changed to `options.decimalFold`.
++ 👉 `getBarSpace()` now returns an object.
++ 👉 `createIndicator` now returns the indicator id.
++ 👉 Custom indicator `calc` now returns an object keyed by timestamp instead of an array.
++ 👉 In custom indicator `createTooltipDataSource`, `values` is renamed to `legends`, and `icons` is renamed to `features`.
++ 👉 `candle.tooltip.icons` is renamed to `candle.tooltip.features`; `indicator.tooltip.icons` is renamed to `indicator.tooltip.features`.
++ 👉 Adjust the calculation logic of the built-in `RSI` indicator.
+
+### Removed
++ 🗑 Remove `utils.drawArc`, `utils.drawCircle`, `utils.drawLine`, `utils.drawPolygon`, `utils.drawRect`, `utils.drawText`, and `utils.drawRectText`. Use `getFigureClass(name)` instead.
++ 🗑 Remove `setPriceVolumePrecision(pricePrecision, volumePrecision)`. Use precision fields in `setSymbol(symbol)`.
++ 🗑 Remove `setLoadMoreData`, `applyNewData`, `applyMoreData`, `updateData`, `setLoadDataCallback`, and `loadMore`. Use `setDataLoader(loader)`.
++ 🗑 Remove `clearData()`. Use `resetData()` to reload data.
++ 🗑 Remove `getIndicatorByPaneId(paneId, name)`. Use `getIndicators(filter)`.
++ 🗑 Remove `getOverlayById(id)`. Use `getOverlays(filter)`.
++ 🗑 Remove `onTooltipIconClick` from `subscribeAction` and `unsubscribeAction`. Use `onCandleTooltipFeatureClick` and `onIndicatorTooltipFeatureClick`.
++ 🗑 Remove style options `yAxis.position`, `yAxis.type`, and `yAxis.inside`. Use default `layout.yAxis` options or instance y-axis APIs.
++ 🗑 Remove style options `candle.tooltip.defaultValue`, `candle.tooltip.custom`, `candle.tooltip.text`, `indicator.tooltip.showName`, `indicator.tooltip.showParams`, `indicator.tooltip.defaultValue`, `indicator.tooltip.text`, and `overlay.rectText`.
++ 🗑 Remove the built-in `rectText` figure. Use `text` instead.
+
+### Fixes and Optimizations
++ 🐞 Fix scrolling when an event falls on a locked overlay.
++ 🐞 Fix overlays that are force-ended during drawing not being restorable through `createOverlay`.
++ 🐞 Fix overlay drawing response in weak magnet mode.
++ 🐞 Fix data callbacks being triggered repeatedly when loading data backward.
++ 🐞 Fix cases where `resize` may not take effect.
++ 🐞 Fix the parameter type of `setZoomAnchor`.
++ 💄 Automatically observe container size changes and call `resize()`.
++ 💄 Optimize ignored figure events in overlay templates so event names align with overlay events.
++ 💄 Optimize indicator calculation tasks.
++ 💄 Optimize mobile scrolling events.
++ 💄 Change the build tool from Rollup to Vite and add `type-check`.
 
 ## 9.x
 
@@ -57,7 +73,7 @@ Go to [https://v9.klinecharts.com](https://v9.klinecharts.com) to check the chan
 
 ## 8.x
 
-Go to [https://v8.klinecharts.com](https://v8.klinecharts.com) to check the change log for 9.x.
+Go to [https://v8.klinecharts.com](https://v8.klinecharts.com) to check the change log for 8.x.
 
 ## 7.x
 

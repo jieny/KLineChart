@@ -25,7 +25,6 @@ import type { RectAttrs } from '../extension/figure/rect'
 import ChildrenView from './ChildrenView'
 
 import { PaneIdConstants } from '../pane/types'
-import { DEFAULT_AXIS_ID } from '../component/Axis'
 
 export interface CandleBarOptions {
   yAxisId: string
@@ -169,9 +168,14 @@ export default class CandleBarView extends ChildrenView {
   }
 
   protected getCandleBarOptions (): Nullable<CandleBarOptions> {
-    const candleStyles = this.getWidget().getPane().getChart().getStyles().candle
+    const pane = this.getWidget().getPane()
+    const yAxisId = pane.getDefaultYAxisId()
+    if (!isValid(yAxisId)) {
+      return null
+    }
+    const candleStyles = pane.getChart().getStyles().candle
     return {
-      yAxisId: DEFAULT_AXIS_ID,
+      yAxisId,
       type: candleStyles.type as Exclude<CandleType, 'area'>,
       styles: candleStyles.bar
     }

@@ -18,17 +18,7 @@ registerXAxis({
 })
 
 const chart = init(
-  'custom-x-axis-chart',
-  {
-    layout: {
-      panes: [
-        {
-          type: 'xAxis',
-          options: { order: 1000 }
-        }
-      ]
-    }
-  }
+  'custom-x-axis-chart'
 )
 chart.overrideXAxis({ name: 'customXAxis' })
 

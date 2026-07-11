@@ -13,7 +13,6 @@
  */
 
 import type DeepRequired from '../common/DeepRequired'
-import type PickRequired from '../common/PickRequired'
 
 import { createDom } from '../common/utils/dom'
 import { getPixelRatio } from '../common/utils/canvas'
@@ -24,41 +23,37 @@ import type Bounding from '../common/Bounding'
 
 import { isBoolean, isNumber, isValid, merge } from '../common/utils/typeChecks'
 
-import { DEFAULT_AXIS_ID, type Axis } from '../component/Axis'
+import type { Axis } from '../component/Axis'
 import type YAxisImp from '../component/YAxis'
 import type { YAxis, YAxisOverride } from '../component/YAxis'
 
 import type DrawWidget from '../widget/DrawWidget'
 import type YAxisWidget from '../widget/YAxisWidget'
 
-import { type PaneOptions, PANE_DEFAULT_HEIGHT, PANE_MIN_HEIGHT, PaneIdConstants } from './types'
+import { type PaneOptions, PaneIdConstants } from './types'
 import Pane from './Pane'
 
 import type Chart from '../Chart'
+import type PickRequired from '../common/PickRequired'
 
 export default abstract class DrawPane<C extends Axis = Axis> extends Pane {
   private readonly _mainWidget: DrawWidget<DrawPane<C>>
   private readonly _yAxisWidgets = new Map<string, YAxisWidget>()
   private readonly _yAxisComponents = new Map<string, YAxis>()
+  private readonly _manualYAxisIds = new Set<string>()
+  private _defaultYAxisId: Nullable<string> = null
   private _yAxesBounding: Record<string, Partial<Bounding>> = {}
 
-  private readonly _options: DeepRequired<PaneOptions> = {
-    id: '',
-    minHeight: PANE_MIN_HEIGHT,
-    dragEnabled: true,
-    order: 0,
-    height: PANE_DEFAULT_HEIGHT,
-    state: 'normal'
-  }
+  private readonly _options: PaneOptions
 
-  constructor (chart: Chart, options: PickRequired<PaneOptions, 'id'>) {
+  constructor (chart: Chart, options: PaneOptions) {
     super(chart, options.id)
     const container = this.getContainer()
     this._mainWidget = this.createMainWidget(container)
-    this.setOptions(options)
+    this._options = options
   }
 
-  setOptions (options: PaneOptions): this {
+  setOptions (options: Partial<PaneOptions>): this {
     merge(this._options, options)
     if (isNumber(options.height) && options.height > 0) {
       this.setBounding({ height: this._options.height })
@@ -86,8 +81,9 @@ export default abstract class DrawPane<C extends Axis = Axis> extends Pane {
     }
   }
 
-  createYAxis (axis: YAxisOverride): YAxis {
-    const yAxisId = axis.id ?? DEFAULT_AXIS_ID
+  createOrOverrideYAxis (override: PickRequired<YAxisOverride, 'id'>): YAxis {
+    const axis = { ...override, paneId: this.getId() }
+    const yAxisId = axis.id
     const yAxisName = axis.name ?? 'normal'
     const needWidget = axis.needWidget ?? true
     let yAxis = this._yAxisComponents.get(yAxisId)
@@ -99,11 +95,23 @@ export default abstract class DrawPane<C extends Axis = Axis> extends Pane {
       yAxis.id = yAxisId
       yAxis.paneId = this.getId()
       this._yAxisComponents.set(yAxisId, yAxis)
+      this._defaultYAxisId ??= yAxisId
       if (needWidget) {
         const yAxisWidget = this.createYAxisWidget(this.getContainer(), yAxis)
         if (isValid(yAxisWidget)) {
           this._yAxisWidgets.set(yAxisId, yAxisWidget)
         }
+      }
+    } else if (isBoolean(axis.needWidget) && isValid(yAxis)) {
+      const yAxisWidget = this._yAxisWidgets.get(yAxisId)
+      if (axis.needWidget && !isValid(yAxisWidget)) {
+        const newYAxisWidget = this.createYAxisWidget(this.getContainer(), yAxis)
+        if (isValid(newYAxisWidget)) {
+          this._yAxisWidgets.set(yAxisId, newYAxisWidget)
+        }
+      } else if (!axis.needWidget && isValid(yAxisWidget)) {
+        yAxisWidget.destroy()
+        this._yAxisWidgets.delete(yAxisId)
       }
     }
     if (!isValid(yAxis)) {
@@ -115,6 +123,12 @@ export default abstract class DrawPane<C extends Axis = Axis> extends Pane {
       name: yAxisName
     })
     this.setAxisCursor(yAxis.scrollZoomEnabled, yAxisId)
+    // Inherit the pane's current geometry. Recreating the axis (e.g. via
+    // `overrideYAxis({ name })`) destroys the old widget, and follow-up
+    // layouts only measure width, so without this the new widget keeps
+    // height 0 and the axis collapses (squashed bars, no ticks).
+    const bounding = this.getBounding()
+    this._yAxisWidgets.get(yAxisId)?.setBounding({ height: bounding.height, top: bounding.top })
     return yAxis
   }
 
@@ -132,12 +146,29 @@ export default abstract class DrawPane<C extends Axis = Axis> extends Pane {
     return this._yAxisComponents.has(yAxisId)
   }
 
+  setManualYAxis (yAxisId: string, manual: boolean): void {
+    if (manual) {
+      this._manualYAxisIds.add(yAxisId)
+    } else {
+      this._manualYAxisIds.delete(yAxisId)
+    }
+  }
+
+  isManualYAxis (yAxisId: string): boolean {
+    return this._manualYAxisIds.has(yAxisId)
+  }
+
   removeYAxis (yAxisId: string): boolean {
     const yAxis = this._yAxisComponents.get(yAxisId)
     if (!isValid(yAxis)) {
       return false
     }
     this._yAxisComponents.delete(yAxisId)
+    this._manualYAxisIds.delete(yAxisId)
+    if (this._defaultYAxisId === yAxisId) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- ignore
+      this._defaultYAxisId = this._yAxisComponents.keys().next().value ?? null
+    }
     const yAxisWidget = this._yAxisWidgets.get(yAxisId)
     if (isValid(yAxisWidget)) {
       yAxisWidget.destroy()
@@ -152,21 +183,21 @@ export default abstract class DrawPane<C extends Axis = Axis> extends Pane {
     return true
   }
 
-  private _getDefaultYAxisId (): Nullable<string> {
-    if (this._yAxisComponents.has(DEFAULT_AXIS_ID)) {
-      return DEFAULT_AXIS_ID
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- ignore
-    return this._yAxisComponents.keys().next().value ?? null
+  getDefaultYAxisId (): Nullable<string> {
+    return this._defaultYAxisId
+  }
+
+  isDefaultYAxis (yAxisId: string): boolean {
+    return this._defaultYAxisId === yAxisId
   }
 
   getYAxisComponentById (yAxisId?: string): YAxis {
-    const id = yAxisId ?? this._getDefaultYAxisId()
+    const id = yAxisId ?? this.getDefaultYAxisId()
     return this._yAxisComponents.get(id!)!
   }
 
   getYAxisWidgetById (yAxisId?: string): Nullable<YAxisWidget> {
-    const id = yAxisId ?? this._getDefaultYAxisId()
+    const id = yAxisId ?? this.getDefaultYAxisId()
     return isValid(id) ? this._yAxisWidgets.get(id) ?? null : null
   }
 

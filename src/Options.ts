@@ -12,11 +12,11 @@
  * limitations under the License.
  */
 
+import type { BarSpaceLimit } from './common/BarSpace'
 import type { KLineData } from './common/Data'
 import type DeepPartial from './common/DeepPartial'
+import type DeepRequired from './common/DeepRequired'
 import type { Styles } from './common/Styles'
-import type { AxisPosition } from './component/Axis'
-import type { IndicatorCreate } from './component/Indicator'
 import type { YAxisOverride } from './component/YAxis'
 import type { PaneOptions } from './pane/types'
 
@@ -85,31 +85,15 @@ export interface ZoomAnchor {
   xAxis: ZoomAnchorType
 }
 
-export interface LayoutBasicParams {
-  barSpaceLimitMin?: number
-  barSpaceLimitMax?: number
-  yAxisPosition?: AxisPosition
-  yAxisInside?: boolean
-  paneMinHeight?: number
-  paneHeight?: number
-}
-
-export interface LayoutPaneContentChildMultipleParams {
-  indicator: string | IndicatorCreate
-  yAxis?: Omit<YAxisOverride, 'paneId'>
-}
-
-export type LayoutPaneContentChild = LayoutPaneContentChildMultipleParams | string | IndicatorCreate
-
-export interface LayoutPane {
-  type: 'candle' | 'indicator' | 'xAxis'
-  content?: LayoutPaneContentChild[]
-  options?: PaneOptions
-}
-
 export interface Layout {
-  basicParams?: LayoutBasicParams
-  panes?: LayoutPane[]
+  barSpaceLimit: BarSpaceLimit
+  pane: Omit<PaneOptions, 'id'>
+  yAxis: DeepRequired<Omit<YAxisOverride, 'id' | 'name' | 'paneId' | 'createRange' | 'createTicks'>>
+}
+
+export interface Hotkey {
+  enabled: boolean
+  exclude: string[]
 }
 
 export interface Options {
@@ -120,5 +104,6 @@ export interface Options {
   thousandsSeparator?: Partial<ThousandsSeparator>
   decimalFold?: Partial<DecimalFold>
   zoomAnchor?: ZoomAnchorType | Partial<ZoomAnchor>
-  layout?: Layout
+  hotkey?: Partial<Hotkey>
+  layout?: DeepPartial<Layout>
 }

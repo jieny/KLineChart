@@ -1,64 +1,79 @@
 # 📠 更新日志
 
-## 10.0.0-beta2
-`2026-05-20`
-+ 🆕 新特性
-  + 支持多 y 轴，同一窗口可以创建多个 y 轴，并通过指标的 `yAxisId` 绑定到指定 y 轴。
-  + 新增实例方法 `overrideXAxis(options)` 和 `overrideYAxis(options)` ，用于独立设置 x 轴和 y 轴配置。
-  + 图表支持容器尺寸自动监听和自动 `resize()` 。
-  + 指标图形新增 `text` 类型，指标 `figures` 可以直接绘制文本。
+## 10.0.0
+`2026-07-11`
 
-+ 👉 变更
-  + 图表方法 `init(ds, options)` 中的 `options.layout` 由数组结构调整为对象结构，新增 `basicParams` 和 `panes` ：
-    + `basicParams` 支持配置 `barSpaceLimitMin` ， `barSpaceLimitMax` ， `yAxisPosition` ， `yAxisInside` ， `paneMinHeight` 和 `paneHeight` 。
-    + `panes` 用于配置窗口布局，窗口内容支持通过 `{ indicator, yAxis }` 为指标指定 y 轴配置。
-  + 实例方法 `createIndicator(indicator, isStack?, paneOptions?)` 变更为 `createIndicator(indicator, options?)` ， `options` 支持 `isStack` ， `pane` 和 `yAxis` 。
-  + `setPaneOptions(options)` 不再包含坐标轴配置，坐标轴配置请使用 `overrideXAxis(options)` 或 `overrideYAxis(options)` 。
-  + `convertToPixel(value, filter?)` 和 `convertFromPixel(coordinate, filter?)` 的 `filter` 新增 `yAxisId` 。
+当前 10.x 版本相对 9.x 是一次主要版本升级，重点调整了数据接入、布局配置、坐标轴、指标、覆盖物、格式化和样式配置。
+
+### 新特性
++ 🆕 支持多 y 轴。同一窗口可以创建多个 y 轴，指标可以通过 `indicator.yAxisId` 绑定到指定 y 轴。
++ 🆕 新增实例方法 `createYAxis(yAxis)`、`removeYAxis(filter)`、`getYAxes(filter)`、`overrideYAxis(options)` 和 `overrideXAxis(options)`。
++ 🆕 支持自定义快捷键，新增 `hotkey` 初始化配置以及 `setHotkey`、`getHotkey`、`registerHotkey`、`getSupportedHotkeys` 等 API。
++ 🆕 覆盖物支持连续绘制模式，内置覆盖物新增 `brush`。
++ 🆕 支持千分符和小数 0 折叠自定义，新增 `thousandsSeparator`、`decimalFold` 配置以及对应实例 API。
++ 🆕 支持设置缩放锚点，新增 `zoomAnchor` 配置以及 `setZoomAnchor(anchor)`、`getZoomAnchor()`。
++ 🆕 支持通过 `setDataLoader(loader)` 统一接入历史数据、实时数据和向前加载数据。
++ 🆕 支持通过 `setSymbol(symbol)`、`getSymbol()`、`setPeriod(period)`、`getPeriod()` 管理当前标的和周期。
++ 🆕 支持在 x 轴显示未来时间。
++ 🆕 支持移动端拖动 y 轴。
++ 🆕 支持在同一窗口创建多个相同名称的指标。
++ 🆕 重写坐标轴模块，自定义 y 轴支持自定义取值范围和分割信息。
++ 🆕 指标图形新增 `text` 类型，指标 `figures` 可以直接绘制文本。
++ 🆕 新增实例方法 `getIndicators(filter)` 和 `getOverlays(filter)` 用于按条件查询指标和覆盖物。
++ 🆕 新增样式配置 `candle.priceMark.last.extendTexts`、`candle.tooltip.title`、`candle.tooltip.legend`、`indicator.tooltip.title`、`indicator.tooltip.legend`、`crosshair.horizontal.features`、`candle.bar.compareRule`、`indicator.ohlc.compareRule` 和 `candle.priceMark.last.compareRule`。
++ 🆕 实例方法 `subscribeAction` 和 `unsubscribeAction` 的事件类型新增 `onIndicatorTooltipFeatureClick` 和 `onCrosshairFeatureClick`。
+
+### 变更
++ 👉 图表方法 `init(ds, options)` 的 `options.layout` 调整为默认布局配置对象：
+  + `layout.barSpaceLimit` 配置柱间距限制。
+  + `layout.pane` 配置默认窗口属性。
+  + `layout.yAxis` 配置默认 y 轴属性。
++ 👉 实例方法 `createIndicator(indicator, options?)` 调整为 `createIndicator(indicator, isStack?)`。指标所在窗口通过 `indicator.paneId` 指定，绑定的 y 轴通过 `indicator.yAxisId` 指定。
++ 👉 `setPaneOptions(options)` 只负责窗口自身属性，坐标轴配置请使用 `overrideXAxis(options)`、`overrideYAxis(options)` 或多 y 轴相关 API。
++ 👉 `convertToPixel(value, filter?)` 和 `convertFromPixel(coordinate, filter?)` 的 `filter` 新增 `yAxisId`。
++ 👉 `options.customApi` 变更为 `options.formatter`，`setCustomApi` 变更为 `setFormatter`，`getCustomApi` 变更为 `getFormatter`。
++ 👉 `formatDate(dateTimeFormat, timestamp, format, type)` 变更为 `formatDate({ dateTimeFormat, timestamp, template, type })`。
++ 👉 `options.thousandsSeparator` 由简单配置变更为对象 `{ sign, format }`。
++ 👉 `options.decimalFoldThreshold` 变更为 `options.decimalFold`。
++ 👉 `getBarSpace()` 返回值由单值变更为对象。
++ 👉 `createIndicator` 返回值变更为指标 id。
++ 👉 自定义指标 `calc` 返回值由数组变更为以时间戳为 key 的对象。
++ 👉 自定义指标 `createTooltipDataSource` 返回值中 `values` 变更为 `legends`，`icons` 变更为 `features`。
++ 👉 样式配置 `candle.tooltip.icons` 变更为 `candle.tooltip.features`，`indicator.tooltip.icons` 变更为 `indicator.tooltip.features`。
++ 👉 内置指标 `RSI` 计算逻辑调整。
+
+### 移除
++ 🗑 删除 `utils.drawArc`、`utils.drawCircle`、`utils.drawLine`、`utils.drawPolygon`、`utils.drawRect`、`utils.drawText` 和 `utils.drawRectText`，请使用 `getFigureClass(name)` 获取图形类。
++ 🗑 删除实例方法 `setPriceVolumePrecision(pricePrecision, volumePrecision)`，请使用 `setSymbol(symbol)` 中的精度配置。
++ 🗑 删除实例方法 `setLoadMoreData`、`applyNewData`、`applyMoreData`、`updateData`、`setLoadDataCallback` 和 `loadMore`，请使用 `setDataLoader(loader)`。
++ 🗑 删除实例方法 `clearData()`，请使用 `resetData()` 重新加载数据。
++ 🗑 删除实例方法 `getIndicatorByPaneId(paneId, name)`，请使用 `getIndicators(filter)`。
++ 🗑 删除实例方法 `getOverlayById(id)`，请使用 `getOverlays(filter)`。
++ 🗑 删除 `subscribeAction` 和 `unsubscribeAction` 中的 `onTooltipIconClick`，请使用 `onCandleTooltipFeatureClick` 和 `onIndicatorTooltipFeatureClick`。
++ 🗑 删除样式配置 `yAxis.position`、`yAxis.type` 和 `yAxis.inside`，请使用 `init` 的 `layout.yAxis` 默认配置或实例 y 轴 API。
++ 🗑 删除样式配置 `candle.tooltip.defaultValue`、`candle.tooltip.custom`、`candle.tooltip.text`、`indicator.tooltip.showName`、`indicator.tooltip.showParams`、`indicator.tooltip.defaultValue`、`indicator.tooltip.text` 和 `overlay.rectText`。
++ 🗑 删除内置基础图形 `rectText`，请使用 `text`。
+
+### 修复与优化
++ 🐞 修复覆盖物锁定状态下，事件落在覆盖物上时无法滚动图表的问题。
++ 🐞 修复强制结束绘制的覆盖物无法通过 `createOverlay` 恢复的问题。
++ 🐞 修复覆盖物弱磁模式下绘制响应问题。
++ 🐞 修复向后加载数据可能无限触发数据请求回调的问题。
++ 🐞 修复 `resize` 可能不生效的问题。
 + 🐞 修复实例 API `setZoomAnchor` 参数类型错误。
-+ 💄 优化构建流程，构建工具由 rollup 调整为 Vite，并新增 `type-check` 校验。
-
-## 10.0.0-beta1
-`2025-11-21`
-+ 🆕 新特性
-  + 支持千分符，小数折叠自定义。
-  + x轴支持显示未来时间。
-  + 支持在移动端y轴拖动。
-  + 支持在同一窗口上创建多个相同名称的指标。
-  + 重写坐标轴模块，自定义y轴支持设置范围。
-  + 图表方法 `init(dom, options)` 中的 `options` 新增 `zoomAnchor` 。
-  + 实例新增方法 `setZoomAnchor(anchor)` ， `getZoomAnchor()` ， `setDataLoader(loader)` ， `setSymbol(symbol)` ， `getSymbol()` ， `setPeriod(period)` ， `getPeriod()` ， `resetData()` ， `setThousandsSeparator(thousandsSeparator)` ， `getThousandsSeparator()` ， `setDecimalFold(decimalFold)` ， `getDecimalFold()` ， `getIndicators()` 和 `getOverlays()` 。
-  + 样式配置新增 `candle.priceMark.last.extendTexts` ， `candle.tooltip.title` ， `candle.tooltip.legend` ， `indicator.tooltip.title` ， `indicator.tooltip.legend` ， `crosshair.horizontal.features` ， `candle.bar.compareRule` ， `indicator.ohlc.compareRule` 和 `candle.priceMark.last.compareRule` 。
-  + 实例方法 `subscribeAction` 和 `unsubscribeAction` ， 入参 `type` 新增 `onIndicatorTooltipFeatureClick` 和 `onCrosshairFeatureClick` 。
-+ 👉 变更
-  + 图表方法 `init(dcs, options)` ， `options.layout` 子项中的 `position` 变更为 `order` ， `options.thousandsSeparator` 变更为对象 `{ sign, format }` ， `options.decimalFoldThreshold` 变更为 `options.decimalFold` ， `options.customApi` 变更为 `options.formatter` ， `formatDate` 参数变更为对象。
-  + 实例方法 `setCustomApi` 变更为 `setFormatter` ， `getCustomApi` 变更为 `getFormatter` ， `getBarSpace()` 返回值变更为对象 ， `createIndicator` 返回值变更为返回指标id ， `overlayIndicator` 入参 `paneId` 合并到入参 `indicator` 中， 。
-  + 自定义指标 `createTooltipDataSource` 方法返回值 `values` 变更为 `legends` ， `icons` 变更为 `features` 。
-  + 样式配置 `candle.tooltip.icons` 变更为 `candle.tooltip.features` ， `indicator.tooltip.icons` 变更为 `indicator.tooltip.features` 。
-+ 💄 优化
-  + 优化覆盖物模版中的 `figure` 忽略事件类型，事件名和 `overlay` 中的事件名称一致。
-  + 优化指标计算任务执行。
-  + 优化移动端滚动事件触发。
-+ 🗑 废弃
-  + 图表方法删除 `utils.drawArc(ctx, arc, styles)` ，`utils.drawCircle(ctx, circle, styles)` ， `utils.drawLine(ctx, line, styles)` ，`utils.drawPolygon(ctx, polygon, styles)` ， `utils.drawRect(ctx, rect, styles)` ，`utils.drawText(ctx, text, styles)` ， `utils.drawRectText(ctx, rectText, styles)`，请使用 `getFigureClass(name)` 代替。
-  + 实例方法删除 `setPriceVolumePrecision(pricePrecision, volumePrecision)` ，请使用 `setPrecision(precision)` 代替。
-  + 实例api删除 `setLoadMoreData` ， `applyNewData` ， `updateData` ， 请替换为 `setDataLoader` ， 删除 `clearData` ， `setPrecision` 和 `getPrecision`。
-  + 实例方法删除 `getIndicatorByPaneId(paneId, name)` ，请使用 `getIndicators(filter)` 代替。
-  + 实例方法删除 `getOverlayById(id)` ，请使用 `getOverlays(filter)` 代替。
-  + 实例方法 `subscribeAction` 和 `unsubscribeAction` 删除入参 `onTooltipIconClick` ，请使用 `onCandleTooltipFeatureClick` 和 `onIndicatorTooltipFeatureClick` 代替。
-  + 样式配置删除 `yAxis.position` ， `yAxis.type` ， `yAxis.inside` 和 `yAxis.inside` ，请使用 [overrideYAxis(options)](/api/instance/overrideYAxis#parameters) 代替。详情参阅图表API [init(dcs, options)](/api/chart/init#parameters) ，实例API [createIndicator(indicator, options)](/api/instance/createIndicator#parameters) 、 [setPaneOptions(options)](/api/instance/setPaneOptions#parameters) 和 [overrideYAxis(options)](/api/instance/overrideYAxis#parameters) 。
-  + 样式配置删除 `candle.tooltip.defaultValue` ， `candle.tooltip.custom` 请替换为 `candle.tooltip.legend` ，删除 `candle.tooltip.text` ，删除 `indicator.tooltip.showName` ， `indicator.tooltip.showParams` ，请用 `indicator.tooltip.title` ，删除 `indicator.tooltip.defaultValue` ， 请替换为 `indicator.tooltip.legend` ， 删除 `indicator.tooltip.text` ， 删除 `overlay.rectText` 。
-  + 内置的基础图形删除 `rectText` ，请使用 `text` 代替。
++ 💄 图表支持容器尺寸自动监听和自动 `resize()`。
++ 💄 优化覆盖物模版中 `figure` 的事件忽略类型，使事件名和 `overlay` 中的事件名称一致。
++ 💄 优化指标计算任务执行。
++ 💄 优化移动端滚动事件触发。
++ 💄 优化构建流程，构建工具由 Rollup 调整为 Vite，并新增 `type-check` 校验。
 
 ## 9.x
 
 去 [https://v9.klinecharts.com](https://v9.klinecharts.com) 上查看。
 
-
 ## 8.x
 
 去 [https://v8.klinecharts.com](https://v8.klinecharts.com) 上查看。
-
 
 ## 7.x
 

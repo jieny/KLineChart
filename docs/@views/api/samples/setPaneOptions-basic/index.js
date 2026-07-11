@@ -2,7 +2,7 @@ import { init } from 'klinecharts'
 
 const chart = init('setPaneOptions-basic-chart')
 const paneId = 'vol_pane'
-chart.createIndicator('VOL', { pane: { id: paneId } })
+chart.createIndicator({ name: 'VOL', paneId })
 
 chart.setPaneOptions({
   id: paneId,

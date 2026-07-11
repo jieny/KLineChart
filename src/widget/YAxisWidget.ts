@@ -24,7 +24,6 @@ import CandleLastPriceLabelView from '../view/CandleLastPriceLabelView'
 import IndicatorLastValueView from '../view/IndicatorLastValueView'
 import OverlayYAxisView from '../view/OverlayYAxisView'
 import CrosshairHorizontalLabelView from '../view/CrosshairHorizontalLabelView'
-import { DEFAULT_AXIS_ID } from '../component/Axis'
 
 export default class YAxisWidget extends DrawWidget<DrawPane<YAxis>> {
   private readonly _yAxis: YAxis
@@ -51,7 +50,9 @@ export default class YAxisWidget extends DrawWidget<DrawPane<YAxis>> {
 
   override updateMain (ctx: CanvasRenderingContext2D): void {
     this._yAxisView.draw(ctx)
-    if (this._yAxis.id === DEFAULT_AXIS_ID && this.getAxisComponent().isInCandle()) {
+    const pane = this.getPane()
+    const isCandleLastPriceLabelVisibleYAxis = pane.isDefaultYAxis(this._yAxis.id) || pane.isManualYAxis(this._yAxis.id)
+    if (isCandleLastPriceLabelVisibleYAxis && this.getAxisComponent().isInCandle()) {
       this._candleLastPriceLabelView.draw(ctx)
     }
     this._indicatorLastValueView.draw(ctx)

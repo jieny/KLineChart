@@ -67,8 +67,6 @@ export type AxisMinSpanCallback = (value: number) => number
 
 export const TICK_COUNT = 8
 
-export const DEFAULT_AXIS_ID = 'default'
-
 export interface AxisOverride {
   name?: string
   id?: string

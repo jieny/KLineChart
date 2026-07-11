@@ -4,7 +4,6 @@ outline: deep
 
 <script setup>
 import InitBasic from '../../../@views/api/samples/init-basic/index.vue'
-import InitLayout from '../../../@views/api/samples/init-layout/index.vue'
 import InitLocaleBuiltIn from '../../../@views/api/samples/init-locale-built-in/index.vue'
 import InitLocaleExtension from '../../../@views/api/samples/init-locale-extension/index.vue'
 import InitTimezone from '../../../@views/api/samples/init-timezone/index.vue'
@@ -33,25 +32,24 @@ import Tip from '../../../@components/Tip.vue'
 - `ds` Container, which can be a DOM element or an element id.
 - `options` Optional configuration item.
   - `layout` Custom layout configuration.
-    - `basicParams` Basic layout parameters.
-      - `barSpaceLimitMin` Minimum bar space.
-      - `barSpaceLimitMax` Maximum bar space.
-      - `yAxisPosition` Default y-axis position, supports `left` and `right`.
-      - `yAxisInside` Whether the default y-axis is inside the pane.
-      - `paneMinHeight` Default pane min height.
-      - `paneHeight` Default pane height.
-    - `panes` Custom pane list.
-      - `type` Pane type, supports `candle` , `indicator` and `xAxis` .
-      - `content` Pane content, only supports indicators. Each item can be an indicator name, an indicator config, or `{ indicator, yAxis }`.
-        - `indicator` Indicator name or indicator config.
-        - `yAxis` Y-axis configuration bound to this indicator. `paneId` is not required.
-      - `options` Pane configuration.
-        - `id` Pane id.
-        - `height` Height.
-        - `minHeight` Min height.
-        - `dragEnabled` Whether the height can be adjusted by dragging.
-        - `order` Order.
-        - `state` State, supports `normal` , `maximize` and `minimize` .
+    - `barSpaceLimit` Bar space limit.
+      - `min` Minimum bar space.
+      - `max` Maximum bar space.
+    - `pane` Default pane configuration.
+      - `height` Height.
+      - `minHeight` Min height.
+      - `dragEnabled` Whether the height can be adjusted by dragging.
+      - `order` Order.
+      - `state` State, supports `normal` , `maximize` and `minimize` .
+    - `yAxis` Default y-axis configuration.
+      - `reverse` Whether to reverse.
+      - `inside` Whether it is inside.
+      - `needWidget` Whether to create an axis widget.
+      - `position` Position, supports `left` and `right`.
+      - `scrollZoomEnabled` Whether to allow scrolling and zooming on the Y-axis.
+      - `gap` Top and bottom margin configuration.
+        - `top` Top margin.
+        - `bottom` Bottom margin.
   - `locale` Locale, with built-in support for `zh-CN` and `en-US` .
   - `timezone` Timezone name, such as `Asia/Shanghai` . If not set, the local time zone will be automatically obtained. For a list of time zone names, please refer to the [Timezone List](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List) .
   - `styles` It can be a style name registered by `klinecharts.registerStyles` or `Styles` . For details about `Styles` , see [Styles](/en-US/guide/styles). Incremental values ​​are supported.
@@ -66,6 +64,9 @@ import Tip from '../../../@components/Tip.vue'
     - `threshold` Fold threshold.
     - `format` Custom formatting method.
   - `zoomAnchor` Zoom anchor position. It can be `last_bar` , `cursor` , or an object `{ main, xAxis }` for main chart and x-axis separately.
+  - `hotkey` Hot key configuration.
+    - `enabled` Whether hot keys are enabled.
+    - `exclude` Global hot key names to exclude.
 
 ### Returns {#returns}
 `init` returns an object `Chart`。
@@ -74,9 +75,6 @@ import Tip from '../../../@components/Tip.vue'
 
 ### Basic usage {#basic}
 <InitBasic/>
-
-### Custom Layout {#layout}
-<InitLayout />
 
 ### Built-in locales {#init-locale-built-in}
 <InitLocaleBuiltIn />

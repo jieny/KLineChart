@@ -21,9 +21,10 @@ import View from './View'
 
 import type { FigureCreate } from '../component/Figure'
 import type YAxis from '../component/YAxis'
+import type YAxisWidget from '../widget/YAxisWidget'
 import type { TextAttrs } from '../extension/figure/text'
 
-export default class CandleLastPriceLabelView extends View {
+export default class CandleLastPriceLabelView extends View<YAxis> {
   override drawImp (ctx: CanvasRenderingContext2D): void {
     const widget = this.getWidget()
     const pane = widget.getPane()
@@ -34,7 +35,7 @@ export default class CandleLastPriceLabelView extends View {
     const lastPriceMarkTextStyles = lastPriceMarkStyles.text
     if (priceMarkStyles.show && lastPriceMarkStyles.show && lastPriceMarkTextStyles.show) {
       const precision = chartStore.getSymbol()?.pricePrecision ?? SymbolDefaultPrecisionConstants.PRICE
-      const yAxis = pane.getYAxisComponentById() as YAxis
+      const yAxis = (widget as unknown as YAxisWidget).getAxisComponent()
       const dataList = chartStore.getDataList()
       const data = dataList[dataList.length - 1]
       if (isValid(data)) {

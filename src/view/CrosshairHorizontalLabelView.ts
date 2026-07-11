@@ -19,7 +19,7 @@ import { isString } from '../common/utils/typeChecks'
 import { createFont } from '../common/utils/canvas'
 import { SymbolDefaultPrecisionConstants } from '../common/SymbolInfo'
 
-import { DEFAULT_AXIS_ID, type Axis } from '../component/Axis'
+import type { Axis } from '../component/Axis'
 import type YAxis from '../component/YAxis'
 
 import type { TextAttrs } from '../extension/figure/text'
@@ -70,10 +70,15 @@ export default class CrosshairHorizontalLabelView<C extends Axis = YAxis> extend
     const value = axis.convertFromPixel(crosshair.y!)
     let precision = 0
     let shouldFormatBigNumber = false
-    if (yAxis.isInCandle() && yAxis.id === DEFAULT_AXIS_ID) {
+    if (yAxis.isInCandle()) {
       precision = chartStore.getSymbol()?.pricePrecision ?? SymbolDefaultPrecisionConstants.PRICE
     } else {
-      const indicators = chartStore.getIndicatorsByPaneId(crosshair.paneId!).filter(indicator => indicator.yAxisId === yAxis.id)
+      let yAxisId = yAxis.id
+      const pane = this.getWidget().getPane()
+      if (pane.isManualYAxis(yAxisId)) {
+        yAxisId = pane.getDefaultYAxisId() ?? yAxisId
+      }
+      const indicators = chartStore.getIndicatorsByPaneId(crosshair.paneId!).filter(indicator => indicator.yAxisId === yAxisId)
       indicators.forEach(indicator => {
         precision = Math.max(indicator.precision, precision)
         shouldFormatBigNumber ||= indicator.shouldFormatBigNumber

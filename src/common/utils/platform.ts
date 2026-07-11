@@ -25,3 +25,7 @@ export function isIOS (): boolean {
   }
   return /iPhone|iPad|iPod|iOS/.test(window.navigator.userAgent)
 }
+
+export function isAppleOS (): boolean {
+  return /Mac|iPhone|iPad|iPod|iOS/.test(window.navigator.userAgent)
+}

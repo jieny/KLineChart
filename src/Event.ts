@@ -18,7 +18,10 @@ import type Coordinate from './common/Coordinate'
 import { UpdateLevel } from './common/Updater'
 import type Crosshair from './common/Crosshair'
 import { requestAnimationFrame, cancelAnimationFrame } from './common/utils/compatible'
-import { isValid } from './common/utils/typeChecks'
+import { isArray, isFunction, isValid } from './common/utils/typeChecks'
+import { isAppleOS } from './common/utils/platform'
+
+import { getHotkey, getSupportedHotkeys } from './extension/hotkey/index'
 
 import type { AxisRange } from './component/Axis'
 import type YAxisImp from './component/YAxis'
@@ -38,8 +41,33 @@ interface EventTriggerWidgetInfo {
   widget: Nullable<Widget>
 }
 
+const hotkeyModifierAlias: Record<string, string> = {
+  command: 'meta',
+  cmd: 'meta',
+  control: 'ctrl',
+  option: 'alt',
+  mod: isAppleOS() ? 'meta' : 'ctrl'
+}
+
+const hotkeyAlias: Record<string, string> = {
+  '+': 'equal',
+  plus: 'equal',
+  add: 'equal',
+  numpadadd: 'equal',
+  '-': 'minus',
+  subtract: 'minus',
+  numpadsubtract: 'minus',
+  esc: 'escape',
+  del: 'delete',
+  left: 'arrowleft',
+  right: 'arrowright',
+  up: 'arrowup',
+  down: 'arrowdown'
+}
+
+const hotKeyModifierOrder = ['ctrl', 'alt', 'shift', 'meta']
+
 export default class Event implements EventHandler {
-  private readonly _container: HTMLElement
   private readonly _chart: Chart
   private readonly _event: EventHandlerImp
 
@@ -70,6 +98,95 @@ export default class Event implements EventHandler {
 
   private _mouseMoveTriggerWidgetInfo: EventTriggerWidgetInfo = { pane: null, widget: null }
 
+  private readonly _boundKeyBoardDownEvent: ((event: KeyboardEvent) => void) = (event: KeyboardEvent) => {
+    const target = event.target as Nullable<HTMLElement>
+    const tagName = target?.tagName.toLowerCase()
+    if (tagName === 'input' || tagName === 'textarea' || target?.isContentEditable === true) {
+      return
+    }
+    const { enabled, exclude } = this._chart.getHotKey()
+    if (!enabled) {
+      return
+    }
+    const eventKeys: string[] = []
+    if (event.ctrlKey) {
+      eventKeys.push('ctrl')
+    }
+    if (event.altKey) {
+      eventKeys.push('alt')
+    }
+    if (event.shiftKey) {
+      eventKeys.push('shift')
+    }
+    if (event.metaKey) {
+      eventKeys.push('meta')
+    }
+    const eventCode = event.code.trim().toLowerCase()
+    if (/^key[a-z]$/.test(eventCode)) {
+      eventKeys.push(eventCode.slice(3))
+    } else if (/^digit[0-9]$/.test(eventCode)) {
+      eventKeys.push(eventCode.slice(5))
+    } else {
+      eventKeys.push(hotkeyAlias[eventCode] ?? eventCode)
+    }
+    const key = eventKeys.join('+')
+    const names = getSupportedHotkeys()
+    for (let i = names.length - 1; i >= 0; i--) {
+      const name = names[i]
+      const hotkey = getHotkey(name)
+      if (!exclude.includes(name) && isValid(hotkey)) {
+        const hotkeyKeys = isArray<string>(hotkey.keys) ? hotkey.keys : [hotkey.keys]
+        const match = hotkeyKeys.some(hotkeyKey => {
+          const modifiers: string[] = []
+          let normalKey = ''
+          hotkeyKey.replace(/\+\+$/, '+Plus').replace(/\+=$/, '+Equal').split('+').forEach(part => {
+            const hotkeyPart = hotkeyModifierAlias[part.trim().toLowerCase()] ?? part
+            const hotkeyPartValue = hotkeyPart.trim().toLowerCase()
+            let value = ''
+            if (/^key[a-z]$/.test(hotkeyPartValue)) {
+              value = hotkeyPartValue.slice(3)
+            } else if (/^digit[0-9]$/.test(hotkeyPartValue)) {
+              value = hotkeyPartValue.slice(5)
+            } else {
+              value = hotkeyAlias[hotkeyPartValue] ?? hotkeyPartValue
+            }
+            if (hotKeyModifierOrder.includes(value)) {
+              if (!modifiers.includes(value)) {
+                modifiers.push(value)
+              }
+            } else if (value.length > 0) {
+              normalKey = value
+            }
+          })
+          modifiers.sort((a, b) => hotKeyModifierOrder.indexOf(a) - hotKeyModifierOrder.indexOf(b))
+          return [...modifiers, normalKey].filter(key => key.length > 0).join('+') === key
+        })
+        if (match) {
+          const params = { chart: this._chart, event, key, hotkey }
+          if (!isFunction(hotkey.check) || hotkey.check(params)) {
+            if (hotkey.preventDefault ?? true) {
+              event.preventDefault()
+            }
+            if (hotkey.stopPropagation ?? false) {
+              event.stopPropagation()
+            }
+            hotkey.action(params)
+            return
+          }
+        }
+      }
+    }
+  }
+
+  constructor (container: HTMLElement, chart: Chart) {
+    this._chart = chart
+    this._event = new EventHandlerImp(container, this, {
+      treatVertDragAsPageScroll: () => false,
+      treatHorzDragAsPageScroll: () => false
+    })
+    document.addEventListener('keydown', this._boundKeyBoardDownEvent)
+  }
+
   private _getYAxisByWidget (widget: Widget<DrawPane<YAxisImp>>): YAxisImp {
     if (widget.getName() === WidgetNameConstants.Y_AXIS) {
       return (widget as unknown as YAxisWidget).getAxisComponent() as unknown as YAxisImp
@@ -77,44 +194,58 @@ export default class Event implements EventHandler {
     return widget.getPane().getYAxisComponentById() as unknown as YAxisImp
   }
 
-  private readonly _boundKeyBoardDownEvent: ((event: KeyboardEvent) => void) = (event: KeyboardEvent) => {
-    if (event.shiftKey) {
-      switch (event.code) {
-        case 'Equal': {
-          this._chart.getChartStore().zoom(0.5, null, 'main')
-          break
-        }
-        case 'Minus': {
-          this._chart.getChartStore().zoom(-0.5, null, 'main')
-          break
-        }
-        case 'ArrowLeft': {
-          const store = this._chart.getChartStore()
-          store.startScroll()
-          store.scroll(-3 * store.getBarSpace().bar)
-          break
-        }
-        case 'ArrowRight': {
-          const store = this._chart.getChartStore()
-          store.startScroll()
-          store.scroll(3 * store.getBarSpace().bar)
-          break
-        }
-        default: {
-          break
-        }
-      }
+  private _getYAxisScaleTargetByWidget (widget: Widget<DrawPane<YAxisImp>>): YAxisImp {
+    const yAxis = this._getYAxisByWidget(widget)
+    const pane = widget.getPane()
+    if (pane.isManualYAxis(yAxis.id)) {
+      return pane.getYAxisComponentById() as unknown as YAxisImp
     }
+    return yAxis
   }
 
-  constructor (container: HTMLElement, chart: Chart) {
-    this._container = container
-    this._chart = chart
-    this._event = new EventHandlerImp(container, this, {
-      treatVertDragAsPageScroll: () => false,
-      treatHorzDragAsPageScroll: () => false
+  private _syncYAxisValueRange (yAxis: YAxisImp, sourceRange: AxisRange): void {
+    const baseRange = yAxis.getRange()
+    const { from, to } = sourceRange
+    const realFrom = yAxis.valueToRealValue(from, { range: baseRange })
+    const realTo = yAxis.valueToRealValue(to, { range: baseRange })
+    const displayFrom = yAxis.realValueToDisplayValue(realFrom, { range: baseRange })
+    const displayTo = yAxis.realValueToDisplayValue(realTo, { range: baseRange })
+    yAxis.setRange({
+      from,
+      to,
+      range: to - from,
+      realFrom,
+      realTo,
+      realRange: realTo - realFrom,
+      displayFrom,
+      displayTo,
+      displayRange: displayTo - displayFrom
     })
-    container.addEventListener('keydown', this._boundKeyBoardDownEvent)
+  }
+
+  private _syncManualYAxesValueRange (widget: Widget<DrawPane<YAxisImp>>, sourceYAxis: YAxisImp): void {
+    const sourceRange = sourceYAxis.getRange()
+    widget.getPane().getYAxisComponents().forEach(axis => {
+      const yAxis = axis as YAxisImp
+      if (yAxis !== sourceYAxis && widget.getPane().isManualYAxis(yAxis.id)) {
+        this._syncYAxisValueRange(yAxis, sourceRange)
+      }
+    })
+  }
+
+  private _resetYAxisAndManualYAxes (widget: Widget<DrawPane<YAxisImp>>, sourceYAxis: YAxisImp): void {
+    sourceYAxis.setAutoCalcTickFlag(true)
+    widget.getPane().getYAxisComponents().forEach(axis => {
+      const yAxis = axis as YAxisImp
+      if (widget.getPane().isManualYAxis(yAxis.id)) {
+        yAxis.setAutoCalcTickFlag(true)
+      }
+    })
+    this._chart.layout({
+      measureWidth: true,
+      update: true,
+      buildYAxisTick: true
+    })
   }
 
   pinchStartEvent (): boolean {
@@ -150,6 +281,17 @@ export default class Event implements EventHandler {
       this._chart.getChartStore().zoom(scale, { x: event.x, y: event.y }, 'main')
       return true
     }
+    if (name === WidgetNameConstants.Y_AXIS) {
+      const yAxisWidget = widget as Widget<DrawPane<YAxisImp>>
+      const yAxis = this._getYAxisByWidget(yAxisWidget)
+      if (yAxis.scrollZoomEnabled) {
+        const scaleFactor = 1 + scale * 0.05
+        const targetYAxis = this._getYAxisScaleTargetByWidget(yAxisWidget)
+        this._zoomYAxis(targetYAxis, scaleFactor)
+        this._syncManualYAxesValueRange(yAxisWidget, targetYAxis)
+        return true
+      }
+    }
     return false
   }
 
@@ -164,17 +306,22 @@ export default class Event implements EventHandler {
           return widget.dispatchEvent('mouseDownEvent', event)
         }
         case WidgetNameConstants.MAIN: {
-          const yAxes = (pane as DrawPane<YAxisImp>).getYAxisComponents()
-          for (const item of yAxes) {
-            const yAxis = item as YAxisImp
-            if (!yAxis.getAutoCalcTickFlag()) {
-              const range = yAxis.getRange()
-              this._prevYAxisRanges.set(yAxis, { ...range })
+          // Dispatch event first to allow overlays (e.g., continuous drawing) to consume it
+          const consumed = widget.dispatchEvent('mouseDownEvent', event)
+          // Only start scrolling if the event was not consumed by an overlay
+          if (!consumed) {
+            const yAxes = (pane as DrawPane<YAxisImp>).getYAxisComponents()
+            for (const item of yAxes) {
+              const yAxis = item as YAxisImp
+              if (!yAxis.getAutoCalcTickFlag()) {
+                const range = yAxis.getRange()
+                this._prevYAxisRanges.set(yAxis, { ...range })
+              }
             }
+            this._startScrollCoordinate = { x: event.x, y: event.y }
+            this._chart.getChartStore().startScroll()
           }
-          this._startScrollCoordinate = { x: event.x, y: event.y }
-          this._chart.getChartStore().startScroll()
-          return widget.dispatchEvent('mouseDownEvent', event)
+          return consumed
         }
         case WidgetNameConstants.X_AXIS: {
           return this._processXAxisScrollStartEvent(widget, event)
@@ -246,6 +393,9 @@ export default class Event implements EventHandler {
           const consumed = widget.dispatchEvent('pressedMouseMoveEvent', event)
           if (!consumed) {
             this._processMainScrollingEvent(widget as Widget<DrawPane<YAxisImp>>, event)
+          } else {
+            // Explicitly update overlay when event was consumed (e.g., continuous drawing)
+            this._chart.updatePane(UpdateLevel.Overlay)
           }
           if (!consumed || widget.getForceCursor() === 'pointer') {
             crosshair = { x: event.x, y: event.y, paneId: pane?.getId() }
@@ -333,14 +483,11 @@ export default class Event implements EventHandler {
           return widget.dispatchEvent('mouseDoubleClickEvent', event)
         }
         case WidgetNameConstants.Y_AXIS: {
-          const yAxis = this._getYAxisByWidget(widget as Widget<DrawPane<YAxisImp>>)
-          if (!yAxis.getAutoCalcTickFlag()) {
-            yAxis.setAutoCalcTickFlag(true)
-            this._chart.layout({
-              measureWidth: true,
-              update: true,
-              buildYAxisTick: true
-            })
+          const yAxisWidget = widget as Widget<DrawPane<YAxisImp>>
+          const yAxis = this._getYAxisByWidget(yAxisWidget)
+          const targetYAxis = this._getYAxisScaleTargetByWidget(yAxisWidget)
+          if (!targetYAxis.getAutoCalcTickFlag() || !yAxis.getAutoCalcTickFlag()) {
+            this._resetYAxisAndManualYAxes(yAxisWidget, targetYAxis)
             return true
           }
           break
@@ -623,7 +770,7 @@ export default class Event implements EventHandler {
     if (consumed) {
       this._chart.updatePane(UpdateLevel.Overlay)
     }
-    const yAxis = this._getYAxisByWidget(widget)
+    const yAxis = this._getYAxisScaleTargetByWidget(widget)
     const range = yAxis.getRange()
     this._prevYAxisRanges.set(yAxis, { ...range })
     this._yAxisStartScaleDistance = event.pageY
@@ -634,40 +781,47 @@ export default class Event implements EventHandler {
     const consumed = widget.dispatchEvent('pressedMouseMoveEvent', event)
     if (!consumed) {
       const yAxis = this._getYAxisByWidget(widget)
-      const prevYAxisRange = this._prevYAxisRanges.get(yAxis)
+      const targetYAxis = this._getYAxisScaleTargetByWidget(widget)
+      const prevYAxisRange = this._prevYAxisRanges.get(targetYAxis)
       if (isValid(prevYAxisRange) && yAxis.scrollZoomEnabled && this._yAxisStartScaleDistance !== 0) {
         event.preventDefault?.()
-        const { from, to, range } = prevYAxisRange
-        const scale = event.pageY / this._yAxisStartScaleDistance
-        const newRange = range * scale
-        const difRange = (newRange - range) / 2
-        const newFrom = from - difRange
-        const newTo = to + difRange
-        const newRealFrom = yAxis.valueToRealValue(newFrom, { range: prevYAxisRange })
-        const newRealTo = yAxis.valueToRealValue(newTo, { range: prevYAxisRange })
-        const newDisplayFrom = yAxis.realValueToDisplayValue(newRealFrom, { range: prevYAxisRange })
-        const newDisplayTo = yAxis.realValueToDisplayValue(newRealTo, { range: prevYAxisRange })
-        yAxis.setRange({
-          from: newFrom,
-          to: newTo,
-          range: newRange,
-          realFrom: newRealFrom,
-          realTo: newRealTo,
-          realRange: newRealTo - newRealFrom,
-          displayFrom: newDisplayFrom,
-          displayTo: newDisplayTo,
-          displayRange: newDisplayTo - newDisplayFrom
-        })
-        this._chart.layout({
-          measureWidth: true,
-          update: true,
-          buildYAxisTick: true
-        })
+        const scaleFactor = event.pageY / this._yAxisStartScaleDistance
+        this._zoomYAxis(targetYAxis, scaleFactor, prevYAxisRange)
+        this._syncManualYAxesValueRange(widget, targetYAxis)
       }
     } else {
       this._chart.updatePane(UpdateLevel.Overlay)
     }
     return consumed
+  }
+
+  private _zoomYAxis (yAxis: YAxisImp, scaleFactor: number, baseRange?: AxisRange): void {
+    const prevYAxisRange = baseRange ?? yAxis.getRange()
+    const { from, to, range } = prevYAxisRange
+    const newRange = range * scaleFactor
+    const difRange = (newRange - range) / 2
+    const newFrom = from - difRange
+    const newTo = to + difRange
+    const newRealFrom = yAxis.valueToRealValue(newFrom, { range: prevYAxisRange })
+    const newRealTo = yAxis.valueToRealValue(newTo, { range: prevYAxisRange })
+    const newDisplayFrom = yAxis.realValueToDisplayValue(newRealFrom, { range: prevYAxisRange })
+    const newDisplayTo = yAxis.realValueToDisplayValue(newRealTo, { range: prevYAxisRange })
+    yAxis.setRange({
+      from: newFrom,
+      to: newTo,
+      range: newRange,
+      realFrom: newRealFrom,
+      realTo: newRealTo,
+      realRange: newRealTo - newRealFrom,
+      displayFrom: newDisplayFrom,
+      displayTo: newDisplayTo,
+      displayRange: newDisplayTo - newDisplayFrom
+    })
+    this._chart.layout({
+      measureWidth: true,
+      update: true,
+      buildYAxisTick: true
+    })
   }
 
   private _findWidgetByEvent (event: MouseTouchEvent): EventTriggerWidgetInfo {
@@ -737,7 +891,7 @@ export default class Event implements EventHandler {
   }
 
   destroy (): void {
-    this._container.removeEventListener('keydown', this._boundKeyBoardDownEvent)
+    document.removeEventListener('keydown', this._boundKeyBoardDownEvent)
     this._event.destroy()
   }
 }

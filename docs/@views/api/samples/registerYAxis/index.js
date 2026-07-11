@@ -33,12 +33,7 @@ registerYAxis({
 })
 
 const chart = init(
-  'custom-y-axis-basic-chart',
-  {
-    layout: {
-      panes: [{ type: 'candle' }]
-    }
-  }
+  'custom-y-axis-basic-chart'
 )
 chart.overrideYAxis({ name: 'customYAxisBasic' })
 

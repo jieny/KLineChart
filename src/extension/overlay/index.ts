@@ -49,6 +49,7 @@ import threeWaves from './threeWaves'
 import triangle from './triangle'
 import xabcd from './xabcd'
 import ruler from './ruler'
+import brush from './brush'
 
 const overlays: Record<string, OverlayInnerConstructor> = {}
 
@@ -58,7 +59,8 @@ const extensions = [
   straightLine, verticalRayLine, verticalSegment, verticalStraightLine,
   simpleAnnotation, simpleTag, abcd, anyWaves, arrow, circle, eightWaves,
   fibonacciCircle, fibonacciExtension, fibonacciSpeedResistanceFan, fibonacciSpiral,
-  fiveWaves, gannBox, parallelogram, rect, threeWaves, triangle, xabcd, ruler
+  fiveWaves, gannBox, parallelogram, rect, threeWaves, triangle, xabcd, ruler,
+  brush
 ]
 
 extensions.forEach((template: OverlayTemplate) => {

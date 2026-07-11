@@ -11,3 +11,5 @@
 
 .DS_Store
 /.vs
+.cursor
+.pnpm-store

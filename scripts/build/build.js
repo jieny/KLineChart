@@ -1,33 +1,26 @@
-import { execFileSync } from 'node:child_process'
-import { styleText } from 'node:util'
-import { build as viteBuild } from 'vite'
+import { rollup } from 'rollup'
 
-import { createBuildConfig, version, env } from './config.js'
-
-function checkInput (index) {
-  if (index.endsWith('.ts')) {
-    execFileSync('pnpm', ['code-lint'], { stdio: 'inherit', shell: true })
-    execFileSync('pnpm', ['type-check'], { stdio: 'inherit', shell: true })
-  }
-}
+import { createInputConfig, createOutputConfig, version, env } from './config.js'
+import { failure, start, success } from './logger.js'
 
 async function build ({ index, replaceValues, fileName, format, parentDir, name }) {
-  const text = `version ${version}${env ? ` ${env} ` : ' '}${format} file`
+  const text = `klinecharts@${version} ${env ? `${env} ` : ''}${format.toUpperCase()} bundle`
+  const startTime = Date.now()
+  const outputOptions = createOutputConfig({
+    fileName, format, name, parentDir
+  })
 
-  console.log(`Start building ${text}...\n`)
+  start(`Building ${text}...`)
 
   try {
-    const startTime = new Date().getTime()
-    checkInput(index)
-    await viteBuild(createBuildConfig({
-      input: index, replaceValues, fileName, format, name, parentDir
-    }))
+    const bundle = await rollup(createInputConfig({ input: index, replaceValues }))
 
-    console.log(styleText('green', `\n✔ Compiled ${text} successfully.\n`))
-    console.log(`${styleText('green', '✔')} Done in ${((new Date().getTime() - startTime) / 1000 / 60).toFixed(2)}s.\n`)
+    await bundle.write(outputOptions)
+    await bundle.close()
+
+    success(`Built ${text}`, startTime)
   } catch (err) {
-    console.log(`\n\n${styleText('red', String(err))}\n`)
-    console.log(styleText('red', `✖️ Failed to compile ${text}.\n`))
+    failure(`Failed to build ${text}.`, err)
     process.exit(1)
   }
 }

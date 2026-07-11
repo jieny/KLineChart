@@ -3,9 +3,7 @@ import { init } from 'klinecharts'
 const chart = init('k-line-chart')
 
 chart.createIndicator(
-  'MA',
-  false,
-  { id: 'candle_pane' }
+  { name: 'MA', paneId: 'candle_pane' }
 )
 chart.createIndicator('VOL')
 chart.setSymbol({ ticker: 'TestSymbol' })

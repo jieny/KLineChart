@@ -4,10 +4,9 @@ const chart = init('removeOverlay-name-chart')
 const paneId = 'ma_pane'
 chart.createIndicator({
   name: 'MA',
+  paneId,
   calcParams: [5],
   shouldOhlc: false
-}, {
-  pane: { id: paneId }
 })
 
 chart.setSymbol({ ticker: 'TestSymbol' })

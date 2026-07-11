@@ -2,7 +2,7 @@
 outline: deep
 ---
 
-# createIndicator(indicator, options?)
+# createIndicator(indicator, isStack?)
 `createIndicator` create an indicator.
 
 ## Reference {#reference}
@@ -12,6 +12,8 @@ outline: deep
 - `indicator` Indicator configuration can be an indicator name or an object. The object parameters are as follows.
   - `name` Name.
   - `id` Indicator id.
+  - `paneId` Pane id where the indicator is created.
+  - `yAxisId` Y-axis id bound to the indicator.
   - `shortName` A short name, used for prompt display.
   - `precision` Precision.
   - `calcParams` Calculate the parameters.
@@ -36,28 +38,7 @@ outline: deep
   - `createTooltipDataSource` Create custom prompts.
   - `draw` Custom drawing method, if the return value is `true`, it will override the default drawing.
   - `onDataStateChange` Data change callback notification.
-- `options` Create options.
-  - `isStack` Whether to stack.
-  - `pane` Pane configuration where the indicator is created.
-    - `id` Pane id.
-    - `height` Height.
-    - `minHeight` Min height.
-    - `dragEnabled` Whether the height can be adjusted by dragging.
-    - `order` Order.
-    - `state` State, supports `normal` , `maximize` and `minimize` .
-  - `yAxis` Y-axis configuration bound to the indicator.
-    - `id` Y-axis id.
-    - `name` Axis name.
-    - `reverse` Whether to reverse.
-    - `inside` Whether it is inside.
-    - `needWidget` Whether to create an axis widget.
-    - `position` Position, supports `left` and `right`.
-    - `scrollZoomEnabled` Whether to allow scrolling and zooming.
-    - `gap` Top and bottom margin configuration.
-      - `top` Top margin.
-      - `bottom` Bottom margin.
-    - `createRange` Create an axis value range callback method.
-    - `createTicks` Create ticks information callback method.
+- `isStack` Whether to stack.
 
 ### Returns {#returns}
 `createIndicator` returns indicator id `string` or `null` .
@@ -68,8 +49,7 @@ import CreateIndicatorBasic from '../../../@views/api/samples/createIndicator-ba
 import CreateIndicatorExtension from '../../../@views/api/samples/custom-indicator-basic/index.vue'
 import CreateIndicatorStack from '../../../@views/api/samples/createIndicator-stack/index.vue'
 import CreateIndicatorObject from '../../../@views/api/samples/createIndicator-object/index.vue'
-import CreateIndicatorPaneOptionsBasic from '../../../@views/api/samples/createIndicator-paneOptions-basic/index.vue'
-import CreateIndicatorPaneOptionsAxis from '../../../@views/api/samples/createIndicator-paneOptions-axis/index.vue'
+import CreateIndicatorYAxis from '../../../@views/api/samples/createIndicator-y-axis/index.vue'
 </script>
 
 ### Basic usage {#basic}
@@ -84,8 +64,5 @@ import CreateIndicatorPaneOptionsAxis from '../../../@views/api/samples/createIn
 ### Setting indicator attrs {#attrs}
 <CreateIndicatorObject/>
 
-### Setting pane basic options {#paneOptions-basic}
-<CreateIndicatorPaneOptionsBasic/>
-
-### Setting y-axis {#paneOptions-axis}
+### Binding y-axis {#y-axis}
 <CreateIndicatorPaneOptionsAxis/>

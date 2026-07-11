@@ -37,7 +37,12 @@ export default class IndicatorLastValueView extends View<YAxis> {
       const dataList = chartStore.getDataList()
       const barSpace = chartStore.getBarSpace()
       const dataIndex = dataList.length - 1
-      const indicators = chartStore.getIndicatorsByPaneId(pane.getId()).filter(indicator => indicator.yAxisId === yAxis.id)
+      const yAxisIds = new Set([yAxis.id])
+      const defaultYAxisId = pane.getDefaultYAxisId()
+      if (pane.isManualYAxis(yAxis.id) && isValid(defaultYAxisId)) {
+        yAxisIds.add(defaultYAxisId)
+      }
+      const indicators = chartStore.getIndicatorsByPaneId(pane.getId()).filter(indicator => yAxisIds.has(indicator.yAxisId))
       const formatter = chartStore.getInnerFormatter()
       const decimalFold = chartStore.getDecimalFold()
       const thousandsSeparator = chartStore.getThousandsSeparator()

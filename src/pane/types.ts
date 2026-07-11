@@ -15,17 +15,13 @@
 export type PaneState = 'normal' | 'maximize' | 'minimize'
 
 export interface PaneOptions {
-  id?: string
-  height?: number
-  minHeight?: number
-  dragEnabled?: boolean
-  order?: number
-  state?: PaneState
+  id: string
+  height: number
+  minHeight: number
+  dragEnabled: boolean
+  order: number
+  state: PaneState
 }
-
-export const PANE_MIN_HEIGHT = 30
-
-export const PANE_DEFAULT_HEIGHT = 100
 
 export const PaneIdConstants = {
   CANDLE: 'candle_pane',

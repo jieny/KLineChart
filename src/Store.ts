@@ -36,9 +36,9 @@ import { logWarn } from './common/utils/logger'
 import { UpdateLevel } from './common/Updater'
 import type { DataLoader, DataLoaderGetBarsParams, DataLoadMore, DataLoadType } from './common/DataLoader'
 
-import type { Options, Formatter, ThousandsSeparator, DecimalFold, FormatDateType, FormatDateParams, FormatBigNumber, FormatExtendText, FormatExtendTextParams, ZoomAnchor, ZoomAnchorType, LayoutBasicParams } from './Options'
+import type { Options, Formatter, ThousandsSeparator, DecimalFold, FormatDateType, FormatDateParams, FormatBigNumber, FormatExtendText, FormatExtendTextParams, ZoomAnchor, ZoomAnchorType, Hotkey, Layout } from './Options'
 
-import type { IndicatorOverride, IndicatorFilter, Indicator } from './component/Indicator'
+import type { IndicatorOverride, IndicatorCreate, IndicatorFilter } from './component/Indicator'
 import type IndicatorImp from './component/Indicator'
 import { getIndicatorClass } from './extension/indicator/index'
 
@@ -48,24 +48,11 @@ import { getOverlayInnerClass } from './extension/overlay/index'
 
 import { getStyles as getExtensionStyles } from './extension/styles/index'
 
-import { PaneIdConstants, PANE_DEFAULT_HEIGHT, PANE_MIN_HEIGHT } from './pane/types'
+import { PaneIdConstants } from './pane/types'
 
 import type Chart from './Chart'
 import type ExcludePickPartial from './common/ExcludePickPartial'
-
-const BarSpaceLimitConstants = {
-  MIN: 1,
-  MAX: 50
-}
-
-const DEFAULT_LAYOUT_BASIC_PARAMS: Required<LayoutBasicParams> = {
-  barSpaceLimitMin: BarSpaceLimitConstants.MIN,
-  barSpaceLimitMax: BarSpaceLimitConstants.MAX,
-  yAxisPosition: 'right',
-  yAxisInside: false,
-  paneMinHeight: PANE_MIN_HEIGHT,
-  paneHeight: PANE_DEFAULT_HEIGHT
-}
+import type DeepRequired from './common/DeepRequired'
 
 type ScrollLimitRole = 'bar_count' | 'distance'
 
@@ -110,6 +97,9 @@ export interface Store {
   getThousandsSeparator: () => ThousandsSeparator
   setDecimalFold: (decimalFold: Partial<DecimalFold>) => void
   getDecimalFold: () => DecimalFold
+  setHotkey: (hotkey: Partial<Hotkey>) => void
+  getHotkey: () => Hotkey
+  getHotKey: () => Hotkey
   setSymbol: (symbol: PickPartial<SymbolInfo, 'pricePrecision' | 'volumePrecision'>) => void
   getSymbol: () => Nullable<SymbolInfo>
   setPeriod: (period: Period) => void
@@ -196,6 +186,14 @@ export default class StoreImp implements Store {
   }
 
   /**
+   * Hotkey
+   */
+  private readonly _hotKey = {
+    enabled: true,
+    exclude: []
+  }
+
+  /**
    * Symbol
    */
   private _symbol: Nullable<SymbolInfo> = null
@@ -264,8 +262,6 @@ export default class StoreImp implements Store {
    * The space of the draw bar
    */
   private _gapBarSpace: number
-
-  private readonly _layoutBasicParams = { ...DEFAULT_LAYOUT_BASIC_PARAMS }
 
   /**
    * Distance from the last data to the right of the drawing area
@@ -380,15 +376,43 @@ export default class StoreImp implements Store {
     figure: null
   }
 
+  /**
+   * Default layout params
+   */
+  private readonly _layoutOptions: DeepRequired<Layout> = {
+    barSpaceLimit: {
+      min: 1,
+      max: 50
+    },
+    pane: {
+      minHeight: 30,
+      dragEnabled: true,
+      order: 0,
+      height: 100,
+      state: 'normal'
+    },
+    yAxis: {
+      reverse: false,
+      inside: false,
+      position: 'right',
+      scrollZoomEnabled: true,
+      needWidget: true,
+      gap: {
+        top: 0.2,
+        bottom: 0.1
+      }
+    }
+  }
+
   constructor (chart: Chart, options?: Options) {
     this._chart = chart
-    const { layout } = options ?? {}
-    if (isValid(layout) && !isArray(layout)) {
-      merge(this._layoutBasicParams, layout.basicParams)
+    const { styles, locale, timezone, formatter, thousandsSeparator, decimalFold, zoomAnchor, hotkey, layout } = options ?? {}
+    if (isValid(layout)) {
+      merge(this._layoutOptions, layout)
     }
     this._calcOptimalBarSpace()
     this._lastBarRightSideDiffBarCount = this._offsetRightDistance / this._barSpace
-    const { styles, locale, timezone, formatter, thousandsSeparator, decimalFold, zoomAnchor } = options ?? {}
+
     if (isValid(styles)) {
       this.setStyles(styles)
     }
@@ -408,6 +432,10 @@ export default class StoreImp implements Store {
 
     if (isValid(zoomAnchor)) {
       this.setZoomAnchor(zoomAnchor)
+    }
+
+    if (isValid(hotkey)) {
+      this.setHotkey(hotkey)
     }
 
     this._taskScheduler = new TaskScheduler(() => {
@@ -512,6 +540,12 @@ export default class StoreImp implements Store {
 
   getDecimalFold (): DecimalFold { return this._decimalFold }
 
+  setHotkey (hotkey: Partial<Hotkey>): void { merge(this._hotKey, hotkey) }
+
+  getHotkey (): Hotkey { return this._hotKey }
+
+  getHotKey (): Hotkey { return this._hotKey }
+
   setSymbol (symbol: PickPartial<SymbolInfo, 'pricePrecision' | 'volumePrecision'>): void {
     this.resetData(() => {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- ignore
@@ -560,7 +594,6 @@ export default class StoreImp implements Store {
   ): void {
     let success = false
     let adjustFlag = false
-    let dataLengthChange = 0
 
     if (dataListForIndicator != null) {
       this._dataListForIndicator = dataListForIndicator
@@ -575,7 +608,6 @@ export default class StoreImp implements Store {
         realMore.backward = more?.backward ?? false
         realMore.forward = more?.forward ?? false
       }
-      dataLengthChange = data.length
       switch (type) {
         case 'init': {
           this._clearData()
@@ -589,14 +621,16 @@ export default class StoreImp implements Store {
         case 'backward': {
           this._dataList = this._dataList.concat(data)
           this._dataLoadMore.backward = realMore.backward
-          this._lastBarRightSideDiffBarCount -= dataLengthChange
-          adjustFlag = dataLengthChange > 0
+          this._lastBarRightSideDiffBarCount -= data.length
+          // scroll start LastBarRightSideDiffBarCount should sub data length
+          this._startLastBarRightSideDiffBarCount -= data.length
+          adjustFlag = data.length > 0
           break
         }
         case 'forward': {
           this._dataList = data.concat(this._dataList)
           this._dataLoadMore.forward = realMore.forward
-          adjustFlag = dataLengthChange > 0
+          adjustFlag = data.length > 0
           break
         }
         default: {
@@ -615,7 +649,6 @@ export default class StoreImp implements Store {
         if (lastBarRightSideDiffBarCount < 0) {
           this.setLastBarRightSideDiffBarCount(--lastBarRightSideDiffBarCount)
         }
-        dataLengthChange = 1
         success = true
         adjustFlag = true
       } else if (timestamp === lastDataTimestamp) {
@@ -684,7 +717,6 @@ export default class StoreImp implements Store {
     if (this._lastBarRightSideDiffBarCount < minRightOffsetBarCount) {
       this._lastBarRightSideDiffBarCount = minRightOffsetBarCount
     }
-
     let to = Math.round(this._lastBarRightSideDiffBarCount + totalBarCount + 0.5)
     const realTo = to
     if (to > totalBarCount) {
@@ -803,8 +835,8 @@ export default class StoreImp implements Store {
 
   setBarSpace (barSpace: number, adjustBeforeFunc?: () => void): void {
     if (
-      barSpace < this._layoutBasicParams.barSpaceLimitMin ||
-      barSpace > this._layoutBasicParams.barSpaceLimitMax ||
+      barSpace < this._layoutOptions.barSpaceLimit.min ||
+      barSpace > this._layoutOptions.barSpaceLimit.max ||
       this._barSpace === barSpace
     ) {
       return
@@ -822,8 +854,8 @@ export default class StoreImp implements Store {
     })
   }
 
-  getLayoutBasicParams (): Required<LayoutBasicParams> {
-    return this._layoutBasicParams
+  getLayoutOptions (): DeepRequired<Layout> {
+    return this._layoutOptions
   }
 
   setTotalBarSpace (totalSpace: number): void {
@@ -1064,6 +1096,140 @@ export default class StoreImp implements Store {
     return Math.ceil(this.coordinateToFloatIndex(x)) - 1
   }
 
+  /**
+   * Converts a float data index to an interpolated timestamp.
+   * This allows sub-bar precision for smooth freehand drawings.
+   * Supports extrapolation beyond the data range (drawing in the "future").
+   * @param floatIndex - A floating point index (e.g., 42.75)
+   * @returns An interpolated timestamp between two bars
+   */
+  floatIndexToTimestamp (floatIndex: number): Nullable<number> {
+    const length = this._dataList.length
+    if (length === 0) {
+      return null
+    }
+
+    const lastIndex = length - 1
+
+    // Handle float index beyond the last bar (extrapolate into the future)
+    if (floatIndex > lastIndex && length >= 2) {
+      const lastTimestamp = this._dataList[lastIndex].timestamp
+      const secondLastTimestamp = this._dataList[lastIndex - 1].timestamp
+      const barDuration = lastTimestamp - secondLastTimestamp
+      if (barDuration > 0) {
+        const barsBeyondLast = floatIndex - lastIndex
+        return Math.round(lastTimestamp + barsBeyondLast * barDuration)
+      }
+    }
+
+    // Handle float index before the first bar (extrapolate into the past)
+    if (floatIndex < 0 && length >= 2) {
+      const firstTimestamp = this._dataList[0].timestamp
+      const secondTimestamp = this._dataList[1].timestamp
+      const barDuration = secondTimestamp - firstTimestamp
+      if (barDuration > 0) {
+        return Math.round(firstTimestamp + floatIndex * barDuration)
+      }
+    }
+
+    // Normal case: interpolate between two bars within the data range
+    const intIndex = Math.floor(floatIndex)
+    const fraction = floatIndex - intIndex
+
+    // Get timestamp at the integer index
+    const timestampAtInt = this.dataIndexToTimestamp(intIndex)
+
+    // If no fractional part, return the integer timestamp
+    if (fraction === 0 || !isNumber(timestampAtInt)) {
+      return timestampAtInt
+    }
+
+    // Get timestamp at the next index for interpolation
+    const timestampAtNext = this.dataIndexToTimestamp(intIndex + 1)
+
+    if (isNumber(timestampAtNext)) {
+      // Linear interpolation between the two timestamps
+      return Math.round(timestampAtInt + (timestampAtNext - timestampAtInt) * fraction)
+    }
+
+    return timestampAtInt
+  }
+
+  /**
+   * Converts a precise timestamp to a float data index.
+   * This preserves sub-bar precision for smooth freehand drawings across timeframe changes.
+   * Supports extrapolation beyond the data range (drawing in the "future").
+   * @param timestamp - A precise timestamp (possibly between or beyond bars)
+   * @returns A floating point index representing the exact position
+   */
+  timestampToFloatIndex (timestamp: number): number {
+    const length = this._dataList.length
+    if (length === 0) {
+      return 0
+    }
+
+    const firstTimestamp = this._dataList[0].timestamp
+    const lastTimestamp = this._dataList[length - 1].timestamp
+
+    // Handle timestamp beyond the last bar (drawing in the "future")
+    if (timestamp > lastTimestamp && length >= 2) {
+      // Calculate average bar duration from the last two bars
+      const secondLastTimestamp = this._dataList[length - 2].timestamp
+      const barDuration = lastTimestamp - secondLastTimestamp
+      if (barDuration > 0) {
+        const timeBeyondLast = timestamp - lastTimestamp
+        const barsBeyond = timeBeyondLast / barDuration
+        return length - 1 + barsBeyond
+      }
+    }
+
+    // Handle timestamp before the first bar
+    if (timestamp < firstTimestamp && length >= 2) {
+      const secondTimestamp = this._dataList[1].timestamp
+      const barDuration = secondTimestamp - firstTimestamp
+      if (barDuration > 0) {
+        const timeBeforeFirst = firstTimestamp - timestamp
+        const barsBefore = timeBeforeFirst / barDuration
+        return -barsBefore
+      }
+    }
+
+    // Find the floor bar index using binary search
+    // We need the bar where barTimestamp <= timestamp < nextBarTimestamp
+    let left = 0
+    let right = length - 1
+    let floorIndex = 0
+
+    while (left <= right) {
+      const mid = Math.floor((left + right) / 2)
+      const midTimestamp = this._dataList[mid].timestamp
+
+      if (midTimestamp <= timestamp) {
+        floorIndex = mid
+        left = mid + 1
+      } else {
+        right = mid - 1
+      }
+    }
+
+    // Get the floor bar and the next bar for interpolation
+    const dataAtFloor = this._dataList[floorIndex]
+    const dataAtNext = floorIndex + 1 < length ? this._dataList[floorIndex + 1] : null
+
+    if (isValid(dataAtFloor) && isValid(dataAtNext)) {
+      const timestampAtFloor = dataAtFloor.timestamp
+      const timestampAtNext = dataAtNext.timestamp
+
+      // Calculate fractional position between the two bars
+      if (timestamp >= timestampAtFloor && timestampAtNext > timestampAtFloor) {
+        const fraction = (timestamp - timestampAtFloor) / (timestampAtNext - timestampAtFloor)
+        return floorIndex + Math.min(fraction, 1) // Clamp to max 1
+      }
+    }
+
+    return floorIndex
+  }
+
   zoom (scale: number, coordinate: Nullable<Partial<Coordinate>>, position: 'main' | 'xAxis'): void {
     if (!this._zoomEnabled) {
       return
@@ -1218,7 +1384,7 @@ export default class StoreImp implements Store {
     }
   }
 
-  addIndicator (create: ExcludePickPartial<Indicator, 'id' | 'name' | 'paneId'>, isStack: boolean): boolean {
+  addIndicator (create: ExcludePickPartial<IndicatorCreate, 'id' | 'name' | 'paneId'>, isStack: boolean): boolean {
     const { name } = create
     const filterIndicators = this.getIndicatorsByFilter(create)
     if (filterIndicators.length > 0) {
