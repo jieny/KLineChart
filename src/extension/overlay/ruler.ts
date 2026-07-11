@@ -53,6 +53,12 @@ const ruler: OverlayTemplate = {
       color: 'rgba(22, 119, 255, 0.15)'
     }
   },
+  // onPressedMoving: (event) => {
+  //   event.chart.overrideOverlay({
+  //     points: event.overlay.points,
+  //     id: event.overlay.id
+  //   })
+  // },
   onDeselected: (event) => {
     // 失去焦点时移除该overlay
     event.chart.removeOverlay({
@@ -85,7 +91,7 @@ const ruler: OverlayTemplate = {
       const points = overlay.points
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- ignore
       // @ts-expect-error
-      const valueDif = points[0].value - points[1].value
+      const valueDif = points[1].value - points[0].value
 
       const priceChg = valueDif.toFixed(precision)
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- ignore

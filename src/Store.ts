@@ -129,6 +129,7 @@ export interface Store {
   overrideIndicator: (override: IndicatorOverride) => boolean
   removeIndicator: (filter?: IndicatorFilter) => boolean
   overrideOverlay: (override: Partial<OverlayCreate>) => boolean
+  selectOverlay: (override: Partial<OverlayCreate>) => boolean
   removeOverlay: (filter?: OverlayFilter) => boolean
   setZoomEnabled: (enabled: boolean) => void
   isZoomEnabled: () => boolean
@@ -1523,6 +1524,64 @@ export default class StoreImp implements Store {
       return true
     }
     return false
+  }
+
+  selectOverlay (override: OverlayOverride): boolean {
+    const filterOverlays = this.getOverlaysByFilter(override)
+
+    if (filterOverlays.length === 0) {
+      return false
+    }
+
+    const targetOverlay = filterOverlays[0]
+
+    const {
+      paneId: prevPaneId,
+      overlay: prevOverlay,
+      figure: prevFigure
+    } = this._clickOverlayInfo
+
+    // 已经选中这个 overlay，就不重复触发 onSelected
+    if (prevOverlay?.id === targetOverlay.id) {
+      return true
+    }
+
+    // 先触发旧 overlay 的取消选中
+    if (isValid(prevOverlay)) {
+      prevOverlay.onDeselected?.({
+        overlay: prevOverlay,
+        figure: prevFigure ?? undefined,
+        chart: this._chart
+      })
+    }
+
+    // 再设置新的选中 overlay
+    this._clickOverlayInfo = {
+      paneId: targetOverlay.paneId,
+      overlay: targetOverlay,
+      figureType: 'none',
+      figureIndex: -1,
+      figure: null
+    }
+
+    // 触发新 overlay 的选中事件
+    targetOverlay.onSelected?.({
+      overlay: targetOverlay,
+      figure: undefined,
+      chart: this._chart
+    })
+
+    // 重绘新 pane
+    this._chart.updatePane(UpdateLevel.Overlay, targetOverlay.paneId)
+
+    // 如果旧 overlay 和新 overlay 不在同一个 pane，也重绘旧 pane
+    if (prevPaneId !== '' && prevPaneId !== targetOverlay.paneId) {
+      this._chart.updatePane(UpdateLevel.Overlay, prevPaneId)
+    }
+
+    this._chart.updatePane(UpdateLevel.Overlay, PaneIdConstants.X_AXIS)
+
+    return true
   }
 
   removeOverlay (filter: OverlayFilter): boolean {
