@@ -1,27 +1,35 @@
-import { execFile } from 'node:child_process'
+import { exec } from 'node:child_process'
 import { promisify } from 'node:util'
 
 import { version } from './config.js'
 import { failure, start, success } from './logger.js'
 
-const execFileAsync = promisify(execFile)
+const execAsync = promisify(exec)
 const startTime = Date.now()
 const output = 'dist/index.d.ts'
 
 start(`Building klinecharts@${version} declaration bundle...`)
 
 try {
-  const { stdout, stderr } = await execFileAsync('dts-bundle-generator', [
-    '--no-banner',
-    'true',
-    '--fail-on-class',
-    'true',
-    '--umd-module-name',
-    'klinecharts',
-    '-o',
-    output,
-    'src/index.ts'
-  ])
+  // const { stdout, stderr } = await execFileAsync('dts-bundle-generator', [
+  //   '--no-banner',
+  //   'true',
+  //   '--fail-on-class',
+  //   'true',
+  //   '--umd-module-name',
+  //   'klinecharts',
+  //   '-o',
+  //   output,
+  //   'src/index.ts'
+  // ])
+  const { stdout, stderr } = await execAsync(
+    `pnpm exec dts-bundle-generator \
+  --no-banner true \
+  --fail-on-class true \
+  --umd-module-name klinecharts \
+  -o "${output}" \
+  src/index.ts`
+  )
 
   const outputLines = stdout
     .split('\n')
