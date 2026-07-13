@@ -38,6 +38,7 @@ import arrow from './arrow'
 import circle from './circle'
 import eightWaves from './eightWaves'
 import fibonacciCircle from './fibonacciCircle'
+import fibonacciSegment from './fibonacciSegment'
 import fibonacciExtension from './fibonacciExtension'
 import fibonacciSpeedResistanceFan from './fibonacciSpeedResistanceFan'
 import fibonacciSpiral from './fibonacciSpiral'
@@ -58,7 +59,7 @@ const extensions = [
   parallelStraightLine, priceChannelLine, priceLine, rayLine, segment,
   straightLine, verticalRayLine, verticalSegment, verticalStraightLine,
   simpleAnnotation, simpleTag, abcd, anyWaves, arrow, circle, eightWaves,
-  fibonacciCircle, fibonacciExtension, fibonacciSpeedResistanceFan, fibonacciSpiral,
+  fibonacciCircle, fibonacciSegment, fibonacciExtension, fibonacciSpeedResistanceFan, fibonacciSpiral,
   fiveWaves, gannBox, parallelogram, rect, threeWaves, triangle, xabcd, ruler,
   brush
 ]
