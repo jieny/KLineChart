@@ -12,13 +12,11 @@
  * limitations under the License.
  */
 
-import type VisibleRange from '../common/VisibleRange'
-
-import type DrawPane from '../pane/DrawPane'
-
-import type Bounding from '../common/Bounding'
 import type { Chart } from '../Chart'
+import type Bounding from '../common/Bounding'
 import type PickRequired from '../common/PickRequired'
+import type VisibleRange from '../common/VisibleRange'
+import type DrawPane from '../pane/DrawPane'
 
 export interface AxisTick {
   coord: number
@@ -98,7 +96,7 @@ export interface Axis {
   convertFromPixel: (px: number) => number
 }
 
-function getDefaultAxisRange (): AxisRange {
+function getDefaultAxisRange(): AxisRange {
   return {
     from: 0,
     to: 0,
@@ -125,13 +123,15 @@ export default abstract class AxisImp implements Axis {
 
   private _autoCalcTickFlag = true
 
-  constructor (parent: DrawPane) {
+  constructor(parent: DrawPane) {
     this._parent = parent
   }
 
-  getParent (): DrawPane { return this._parent }
+  getParent(): DrawPane {
+    return this._parent
+  }
 
-  buildTicks (force: boolean): boolean {
+  buildTicks(force: boolean): boolean {
     if (this._autoCalcTickFlag) {
       this._range = this.createRangeImp()
     }
@@ -143,33 +143,37 @@ export default abstract class AxisImp implements Axis {
     return false
   }
 
-  getTicks (): AxisTick[] {
+  getTicks(): AxisTick[] {
     return this._ticks
   }
 
-  setRange (range: AxisRange): void {
+  setRange(range: AxisRange): void {
     this._autoCalcTickFlag = false
     this._range = range
   }
 
-  getRange (): AxisRange { return this._range }
+  getRange(): AxisRange {
+    return this._range
+  }
 
-  setAutoCalcTickFlag (flag: boolean): void {
+  setAutoCalcTickFlag(flag: boolean): void {
     this._autoCalcTickFlag = flag
   }
 
-  getAutoCalcTickFlag (): boolean { return this._autoCalcTickFlag }
+  getAutoCalcTickFlag(): boolean {
+    return this._autoCalcTickFlag
+  }
 
-  protected abstract createRangeImp (): AxisRange
+  protected abstract createRangeImp(): AxisRange
 
-  protected abstract createTicksImp (): AxisTick[]
+  protected abstract createTicksImp(): AxisTick[]
 
-  protected abstract getBounding (): Bounding
+  protected abstract getBounding(): Bounding
 
-  abstract override (axis: AxisOverride): void
+  abstract override(axis: AxisOverride): void
 
-  abstract getAutoSize (): number
+  abstract getAutoSize(): number
 
-  abstract convertToPixel (value: number): number
-  abstract convertFromPixel (px: number): number
+  abstract convertToPixel(value: number): number
+  abstract convertFromPixel(px: number): number
 }

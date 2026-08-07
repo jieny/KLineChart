@@ -11,6 +11,8 @@ If you think the plugin is good, I hope you can click 🌟 on [GitHub](https://g
 
 For organizations or individuals sponsoring KLineChart, no matter how much, if necessary, display the organization's official website or personal homepage on the https://klinecharts.com on the homepage, please provide payment account or address, logo, homepage link, and other information by sending an email to hu_li888@foxmail.com . Those with sponsor amount top three, will use large logo display.
 
+**For top sponsor presentations, please [contact the author](/en-US/guide/feedback).**
+
 ## Sponsor Channels
 ### Alipay
 <img style="width:180px;margin-top:10px" src="/images/alipay_qr_code.png"/>

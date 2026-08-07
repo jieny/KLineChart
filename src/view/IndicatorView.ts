@@ -12,18 +12,18 @@
  * limitations under the License.
  */
 
+import type Coordinate from '../common/Coordinate'
 import type Nullable from '../common/Nullable'
 import type { CandleColorCompareRule, SmoothLineStyle } from '../common/Styles'
 import { formatValue } from '../common/utils/format'
 import { isNumber, isValid } from '../common/utils/typeChecks'
-import type Coordinate from '../common/Coordinate'
 
 import { eachFigures, type IndicatorFigure, type IndicatorFigureAttrs, type IndicatorFigureStyle } from '../component/Indicator'
 
 import CandleBarView, { type CandleBarOptions } from './CandleBarView'
 
 export default class IndicatorView extends CandleBarView {
-  override getCandleBarOptions (): Nullable<CandleBarOptions> {
+  override getCandleBarOptions(): Nullable<CandleBarOptions> {
     const pane = this.getWidget().getPane()
     const chartStore = pane.getChart().getChartStore()
     const indicators = chartStore.getIndicatorsByPaneId(pane.getId())
@@ -57,7 +57,7 @@ export default class IndicatorView extends CandleBarView {
     return null
   }
 
-  override drawImp (ctx: CanvasRenderingContext2D): void {
+  override drawImp(ctx: CanvasRenderingContext2D): void {
     super.drawImp(ctx)
     const widget = this.getWidget()
     const pane = widget.getPane()
@@ -68,7 +68,7 @@ export default class IndicatorView extends CandleBarView {
     const indicators = chartStore.getIndicatorsByPaneId(pane.getId())
     const defaultStyles = chartStore.getStyles().indicator
     ctx.save()
-    indicators.forEach(indicator => {
+    indicators.forEach((indicator) => {
       const yAxis = pane.getYAxisComponentById(indicator.yAxisId)
       if (indicator.visible) {
         if (indicator.zLevel < 0) {
@@ -91,7 +91,7 @@ export default class IndicatorView extends CandleBarView {
         }
         if (!isCover) {
           const result = indicator.result
-          const lines: Array<Array<{ coordinates: Coordinate[], styles: Partial<SmoothLineStyle> }>> = []
+          const lines: Array<Array<{ coordinates: Coordinate[]; styles: Partial<SmoothLineStyle> }>> = []
 
           this.eachChildren((data, barSpace) => {
             const { halfGapBar } = barSpace
@@ -105,17 +105,14 @@ export default class IndicatorView extends CandleBarView {
             const currentCoordinate = { x }
             const nextCoordinate = { x: nextX }
             indicator.figures.forEach(({ key }) => {
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- ignore
               const prevValue = prevData?.[key]
               if (isNumber(prevValue)) {
                 prevCoordinate[key] = yAxis.convertToPixel(prevValue)
               }
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- ignore
               const currentValue = currentData?.[key]
               if (isNumber(currentValue)) {
                 currentCoordinate[key] = yAxis.convertToPixel(currentValue)
               }
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- ignore
               const nextValue = nextData?.[key]
               if (isNumber(nextValue)) {
                 nextCoordinate[key] = yAxis.convertToPixel(nextValue)
@@ -123,7 +120,6 @@ export default class IndicatorView extends CandleBarView {
             })
             eachFigures(indicator, dataIndex, barSpace, defaultStyles, (figure: IndicatorFigure, figureStyles: IndicatorFigureStyle, figureIndex: number) => {
               if (isValid(currentData?.[figure.key])) {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- ignore
                 const valueY = currentCoordinate[figure.key]
                 let attrs = figure.attrs?.({
                   data: { prev: prevData, current: currentData, next: nextData },
@@ -137,9 +133,7 @@ export default class IndicatorView extends CandleBarView {
                   case 'text': {
                     attrs = {
                       x,
-                      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- ignore
                       y: valueY,
-                      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- ignore
                       text: currentData?.[figure.key],
                       align: 'center',
                       baseline: 'middle',
@@ -148,7 +142,6 @@ export default class IndicatorView extends CandleBarView {
                     break
                   }
                   case 'circle': {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- ignore
                     attrs = { x, y: valueY, r: Math.max(1, halfGapBar), ...attrs }
                     break
                   }
@@ -164,7 +157,6 @@ export default class IndicatorView extends CandleBarView {
                     if (valueY > baseValueY) {
                       y = baseValueY
                     } else {
-                      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- ignore
                       y = valueY
                     }
                     const barWidth = attrs?.width ?? halfGapBar * 2
@@ -184,9 +176,7 @@ export default class IndicatorView extends CandleBarView {
                     if (isNumber(currentCoordinate[figure.key]) && isNumber(nextCoordinate[figure.key])) {
                       lines[figureIndex].push({
                         coordinates: attrs?.coordinates ?? [
-                          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- ignore
                           { x: currentCoordinate.x, y: currentCoordinate[figure.key] },
-                          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- ignore
                           { x: nextCoordinate.x, y: nextCoordinate[figure.key] }
                         ],
                         styles: figureStyles as unknown as SmoothLineStyle
@@ -194,7 +184,9 @@ export default class IndicatorView extends CandleBarView {
                     }
                     break
                   }
-                  default: { break }
+                  default: {
+                    break
+                  }
                 }
                 const type = figure.type!
                 if (isValid<IndicatorFigureAttrs>(attrs) && type !== 'line') {
@@ -209,7 +201,7 @@ export default class IndicatorView extends CandleBarView {
           })
 
           // merge line and render
-          lines.forEach(items => {
+          lines.forEach((items) => {
             if (items.length > 1) {
               const mergeLines = [
                 {

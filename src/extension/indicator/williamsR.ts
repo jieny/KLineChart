@@ -13,9 +13,8 @@
  */
 
 import type { KLineData } from '../../common/Data'
-import type { IndicatorTemplate } from '../../component/Indicator'
-
 import { getMaxMin } from '../../common/utils/number'
+import type { IndicatorTemplate } from '../../component/Indicator'
 
 interface Wr {
   wr1?: number
@@ -49,7 +48,7 @@ const williamsR: IndicatorTemplate<Wr, number> = {
           const hn = hln[0]
           const ln = hln[1]
           const hnSubLn = hn - ln
-          wr[figures[index].key] = hnSubLn === 0 ? 0 : (close - hn) / hnSubLn * 100
+          wr[figures[index].key] = hnSubLn === 0 ? 0 : ((close - hn) / hnSubLn) * 100
         }
       })
       return wr

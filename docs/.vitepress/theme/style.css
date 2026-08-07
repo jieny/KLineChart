@@ -99,11 +99,6 @@ html {
   }
 }
 
-/* .VPNavBarMenuGroup .VPMenu {
-  border-radius: 6px;
-  padding: 4px;
-} */
-
 .VPSidebar {
   border-right: solid 1px var(--vp-c-divider);
 }

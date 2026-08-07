@@ -1,7 +1,7 @@
 :root {
   --home-content-max: 1152px;
   --home-section-gap: 80px;
-  --home-card-padding: 22px 20px 24px;
+  --home-card-padding: 22px;
   --home-grid-gap: 14px;
   --home-grid-gap-lg: 20px;
   --home-reveal-distance: 24px;
@@ -10,7 +10,7 @@
   --home-brand-border: var(--vp-c-gutter);
   --home-brand-border-hover: color-mix(in srgb, var(--vp-c-brand-1) 28%, var(--vp-c-divider));
   --home-brand-surface: color-mix(in srgb, var(--vp-c-brand-1) 6%, transparent);
-  --home-brand-surface-soft: color-mix(in srgb, var(--vp-c-bg-soft) 42%, var(--vp-c-bg));
+  --home-brand-surface-soft: var(--vp-c-bg);
 }
 
 @keyframes home-fade-up {

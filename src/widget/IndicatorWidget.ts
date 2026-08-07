@@ -12,18 +12,15 @@
  * limitations under the License.
  */
 
-import type DrawPane from '../pane/DrawPane'
-
-import { WidgetNameConstants } from './types'
-import DrawWidget from './DrawWidget'
-
 import type { YAxis } from '../component/YAxis'
-
-import GridView from '../view/GridView'
-import IndicatorView from '../view/IndicatorView'
+import type DrawPane from '../pane/DrawPane'
 import CrosshairLineView from '../view/CrosshairLineView'
+import GridView from '../view/GridView'
 import IndicatorTooltipView from '../view/IndicatorTooltipView'
+import IndicatorView from '../view/IndicatorView'
 import OverlayView from '../view/OverlayView'
+import DrawWidget from './DrawWidget'
+import { WidgetNameConstants } from './types'
 
 export default class IndicatorWidget extends DrawWidget<DrawPane<YAxis>> {
   private readonly _gridView = new GridView(this)
@@ -32,35 +29,35 @@ export default class IndicatorWidget extends DrawWidget<DrawPane<YAxis>> {
   private readonly _tooltipView = this.createTooltipView()
   private readonly _overlayView = new OverlayView(this)
 
-  constructor (rootContainer: HTMLElement, pane: DrawPane<YAxis>) {
+  constructor(rootContainer: HTMLElement, pane: DrawPane<YAxis>) {
     super(rootContainer, pane)
     this.addChild(this._tooltipView)
     this.addChild(this._overlayView)
   }
 
-  getName (): string {
+  getName(): string {
     return WidgetNameConstants.MAIN
   }
 
-  protected updateMain (ctx: CanvasRenderingContext2D): void {
+  protected updateMain(ctx: CanvasRenderingContext2D): void {
     this.updateMainContent(ctx)
     this._indicatorView.draw(ctx)
     this._gridView.draw(ctx)
   }
 
-  protected createTooltipView (): IndicatorTooltipView {
+  protected createTooltipView(): IndicatorTooltipView {
     return new IndicatorTooltipView(this)
   }
 
-  protected updateMainContent (_ctx: CanvasRenderingContext2D): void {
+  protected updateMainContent(_ctx: CanvasRenderingContext2D): void {
     // to do it
   }
 
-  protected updateOverlayContent (_ctx: CanvasRenderingContext2D): void {
+  protected updateOverlayContent(_ctx: CanvasRenderingContext2D): void {
     // to do it
   }
 
-  override updateOverlay (ctx: CanvasRenderingContext2D): void {
+  override updateOverlay(ctx: CanvasRenderingContext2D): void {
     this._overlayView.draw(ctx)
     this._crosshairLineView.draw(ctx)
     this.updateOverlayContent(ctx)

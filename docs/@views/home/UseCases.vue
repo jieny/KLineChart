@@ -1,17 +1,16 @@
 <script setup>
+import { useData, withBase } from 'vitepress'
 import { computed } from 'vue'
-import { useData } from 'vitepress'
 
 import i18n from '../../@i18n'
-import Section from './Section.vue'
-import UseCaseIllustration from './illustrations/UseCaseIllustration.vue'
 import { useInView } from './composables/useInView.js'
+import Section from './Section.vue'
 
-const { lang } = useData()
+const { lang, isDark } = useData()
 const { target: casesRef, isVisible } = useInView()
 
 const items = computed(() =>
-  [1, 2, 3, 4].map(index => ({
+  [1, 2, 3, 4].map((index) => ({
     variant: index,
     title: i18n(`view_home_case_${index}_title`, lang.value),
     description: i18n(`view_home_case_${index}_desc`, lang.value)
@@ -29,15 +28,22 @@ const items = computed(() =>
       <article
         v-for="(item, index) in items"
         :key="item.title"
-        class="use-case home-card home-card--interactive home-stagger-item"
+        class="use-case home-card home-stagger-item"
         :style="{ '--stagger-delay': `${index * 0.07}s` }"
       >
+        <div class="illustration-wrap" aria-hidden="true">
+          <img
+            class="illustration"
+            :src="withBase(`/images/use-cases/use-case-${item.variant}-${isDark ? 'dark' : 'light'}.png`)"
+            :alt="''"
+            width="160"
+            height="120"
+            loading="lazy"
+          >
+        </div>
         <div class="use-case-body home-card-body">
           <h3>{{ item.title }}</h3>
           <p class="summary">{{ item.description }}</p>
-        </div>
-        <div class="illustration-wrap" aria-hidden="true">
-          <UseCaseIllustration :variant="item.variant" />
         </div>
       </article>
     </div>
@@ -55,14 +61,14 @@ const items = computed(() =>
   display: flex;
   flex-direction: column;
   min-height: 100%;
-  padding: 0;
+  padding: 22px;
   overflow: hidden;
 }
 
 .use-case-body {
   flex: 1;
   min-width: 0;
-  justify-content: center;
+  padding: 22px 0 0;
 }
 
 .summary {
@@ -73,14 +79,22 @@ const items = computed(() =>
 }
 
 .illustration-wrap {
-  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
   width: 100%;
-  min-height: 124px;
-  padding: 16px;
+  height: 124px;
+  padding: 0;
   overflow: hidden;
+}
+
+.illustration {
+  display: block;
+  width: 100%;
+  max-width: 160px;
+  height: 100%;
+  object-fit: contain;
 }
 
 @media (min-width: 768px) {
@@ -89,16 +103,26 @@ const items = computed(() =>
     gap: var(--home-grid-gap-lg);
   }
 
-  .use-case {
-    flex-direction: row;
-    align-items: stretch;
+  .illustration-wrap {
+    height: 140px;
+  }
+
+  .illustration {
+    max-width: 180px;
+  }
+}
+
+@media (min-width: 960px) {
+  .use-cases {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .illustration-wrap {
-    width: 176px;
-    min-width: 176px;
-    min-height: 100%;
-    padding: 20px 14px;
+    height: 150px;
+  }
+
+  .illustration {
+    max-width: 200px;
   }
 }
 </style>

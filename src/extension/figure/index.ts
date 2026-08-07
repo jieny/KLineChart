@@ -14,38 +14,38 @@
 
 import type Nullable from '../../common/Nullable'
 
-import FigureImp, { type FigureTemplate, type FigureConstructor, type FigureInnerConstructor } from '../../component/Figure'
-
+import FigureImp, { type FigureConstructor, type FigureInnerConstructor, type FigureTemplate } from '../../component/Figure'
+import arc from './arc'
 import circle from './circle'
 import line from './line'
+import path from './path'
 import polygon from './polygon'
 import rect from './rect'
 import text from './text'
-import arc from './arc'
-import path from './path'
-import textBox from './textBox'
 
 const figures: Record<string, FigureInnerConstructor> = {}
 
-const extensions = [circle, line, polygon, rect, text, arc, path, textBox]
+const extensions = [circle, line, polygon, rect, text, arc, path]
+// @ts-ignore
 extensions.forEach((figure: FigureTemplate) => {
   figures[figure.name] = FigureImp.extend(figure)
 })
 
-function getSupportedFigures (): string[] {
+function getSupportedFigures(): string[] {
   return Object.keys(figures)
 }
 
-function registerFigure<A = unknown, S = unknown> (figure: FigureTemplate<A, S>): void {
+function registerFigure<A = unknown, S = unknown>(figure: FigureTemplate<A, S>): void {
+  // @ts-ignore
   figures[figure.name] = FigureImp.extend(figure)
 }
 
-function getInnerFigureClass (name: string): Nullable<FigureInnerConstructor> {
+function getInnerFigureClass(name: string): Nullable<FigureInnerConstructor> {
   return figures[name] ?? null
 }
 
-function getFigureClass<A = unknown, S = unknown> (name: string): Nullable<FigureConstructor<A, S>> {
+function getFigureClass<A = unknown, S = unknown>(name: string): Nullable<FigureConstructor<A, S>> {
   return figures[name] ?? null
 }
 
-export { getSupportedFigures, getFigureClass, getInnerFigureClass, registerFigure }
+export { getFigureClass, getInnerFigureClass, getSupportedFigures, registerFigure }

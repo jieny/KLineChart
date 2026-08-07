@@ -12,19 +12,17 @@
  * limitations under the License.
  */
 
-import type Nullable from '../common/Nullable'
-import type { VisibleRangeData } from '../common/Data'
 import type BarSpace from '../common/BarSpace'
-import { isValid } from '../common/utils/typeChecks'
+import type { VisibleRangeData } from '../common/Data'
 import type { EventHandler } from '../common/EventHandler'
-import type { CandleType, CandleBarColor, RectStyle } from '../common/Styles'
+import type Nullable from '../common/Nullable'
+import type { CandleBarColor, CandleType, RectStyle } from '../common/Styles'
+import { isValid } from '../common/utils/typeChecks'
 
 import type { FigureCreate } from '../component/Figure'
 import type { RectAttrs } from '../extension/figure/rect'
-
-import ChildrenView from './ChildrenView'
-
 import { PaneIdConstants } from '../pane/types'
+import ChildrenView from './ChildrenView'
 
 export interface CandleBarOptions {
   yAxisId: string
@@ -38,7 +36,7 @@ export default class CandleBarView extends ChildrenView {
     return false
   }
 
-  override drawImp (ctx: CanvasRenderingContext2D): void {
+  override drawImp(ctx: CanvasRenderingContext2D): void {
     const pane = this.getWidget().getPane()
     const isMain = pane.getId() === PaneIdConstants.CANDLE
     const chartStore = pane.getChart().getChartStore()
@@ -57,7 +55,10 @@ export default class CandleBarView extends ChildrenView {
       }
       const yAxis = pane.getYAxisComponentById(candleBarOptions.yAxisId)
       this.eachChildren((visibleData, barSpace) => {
-        const { x, data: { current, prev } } = visibleData
+        const {
+          x,
+          data: { current, prev }
+        } = visibleData
         if (isValid(current)) {
           const { open, high, low, close } = current
           const color = current.color
@@ -89,11 +90,7 @@ export default class CandleBarView extends ChildrenView {
 
           const openY = yAxis.convertToPixel(open)
           const closeY = yAxis.convertToPixel(close)
-          const priceY = [
-            openY, closeY,
-            yAxis.convertToPixel(high),
-            yAxis.convertToPixel(low)
-          ]
+          const priceY = [openY, closeY, yAxis.convertToPixel(high), yAxis.convertToPixel(low)]
           priceY.sort((a, b) => a - b)
 
           const correction = barSpace.gapBar % 2 === 0 ? 1 : 0
@@ -153,7 +150,7 @@ export default class CandleBarView extends ChildrenView {
               break
             }
           }
-          rects.forEach(rect => {
+          rects.forEach((rect) => {
             let handler: Nullable<EventHandler> = null
             if (isMain) {
               handler = {
@@ -167,7 +164,7 @@ export default class CandleBarView extends ChildrenView {
     }
   }
 
-  protected getCandleBarOptions (): Nullable<CandleBarOptions> {
+  protected getCandleBarOptions(): Nullable<CandleBarOptions> {
     const pane = this.getWidget().getPane()
     const yAxisId = pane.getDefaultYAxisId()
     if (!isValid(yAxisId)) {
@@ -181,7 +178,7 @@ export default class CandleBarView extends ChildrenView {
     }
   }
 
-  private _createSolidBar (x: number, priceY: number[], barSpace: BarSpace, colors: string[], correction: number): Array<FigureCreate<RectAttrs | RectAttrs[], Partial<RectStyle>>> {
+  private _createSolidBar(x: number, priceY: number[], barSpace: BarSpace, colors: string[], correction: number): Array<FigureCreate<RectAttrs | RectAttrs[], Partial<RectStyle>>> {
     return [
       {
         name: 'rect',
@@ -210,7 +207,7 @@ export default class CandleBarView extends ChildrenView {
     ]
   }
 
-  private _createStrokeBar (x: number, priceY: number[], barSpace: BarSpace, colors: string[], correction: number): Array<FigureCreate<RectAttrs | RectAttrs[], Partial<RectStyle>>> {
+  private _createStrokeBar(x: number, priceY: number[], barSpace: BarSpace, colors: string[], correction: number): Array<FigureCreate<RectAttrs | RectAttrs[], Partial<RectStyle>>> {
     return [
       {
         name: 'rect',

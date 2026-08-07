@@ -38,9 +38,7 @@ const stopAndReverse: IndicatorTemplate<Sar, number> = {
         const { current } = data
         const sar = current?.sar ?? Number.MIN_SAFE_INTEGER
         const halfHL = ((current?.high ?? 0) + (current?.low ?? 0)) / 2
-        const color = sar < halfHL
-          ? formatValue(indicator.styles, 'circles[0].upColor', (defaultStyles!.circles)[0].upColor) as string
-          : formatValue(indicator.styles, 'circles[0].downColor', (defaultStyles!.circles)[0].downColor) as string
+        const color = sar < halfHL ? (formatValue(indicator.styles, 'circles[0].upColor', defaultStyles!.circles[0].upColor) as string) : (formatValue(indicator.styles, 'circles[0].downColor', defaultStyles!.circles[0].downColor) as string)
         return { color }
       }
     }
@@ -92,7 +90,7 @@ const stopAndReverse: IndicatorTemplate<Sar, number> = {
         if (sar < kLineData.high) {
           sar = ep
           // 重新初始化值
-          af = 0
+          af = startAf
           ep = -100
           isIncreasing = !isIncreasing
         } else if (sar < highMax) {

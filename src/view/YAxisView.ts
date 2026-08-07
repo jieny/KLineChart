@@ -14,26 +14,24 @@
 
 import type Bounding from '../common/Bounding'
 import type { AxisStyle, Styles } from '../common/Styles'
-
-import type { LineAttrs } from '../extension/figure/line'
-import type { TextAttrs } from '../extension/figure/text'
-
 import type { AxisTick } from '../component/Axis'
 import type { YAxis } from '../component/YAxis'
+import type { LineAttrs } from '../extension/figure/line'
+import type { TextAttrs } from '../extension/figure/text'
 import type YAxisWidget from '../widget/YAxisWidget'
 
 import AxisView from './AxisView'
 
 export default class YAxisView extends AxisView<YAxis> {
-  protected override getAxis (): YAxis {
+  protected override getAxis(): YAxis {
     return (this.getWidget() as unknown as YAxisWidget).getAxisComponent()
   }
 
-  override getAxisStyles (styles: Styles): AxisStyle {
+  override getAxisStyles(styles: Styles): AxisStyle {
     return styles.yAxis
   }
 
-  override createAxisLine (bounding: Bounding, styles: AxisStyle): LineAttrs {
+  override createAxisLine(bounding: Bounding, styles: AxisStyle): LineAttrs {
     const yAxis = this.getAxis()
     const size = styles.axisLine.size
     let x = 0
@@ -50,7 +48,7 @@ export default class YAxisView extends AxisView<YAxis> {
     }
   }
 
-  override createTickLines (ticks: AxisTick[], bounding: Bounding, styles: AxisStyle): LineAttrs[] {
+  override createTickLines(ticks: AxisTick[], bounding: Bounding, styles: AxisStyle): LineAttrs[] {
     const yAxis = this.getAxis()
     const axisLineStyles = styles.axisLine
     const tickLineStyles = styles.tickLine
@@ -70,7 +68,7 @@ export default class YAxisView extends AxisView<YAxis> {
       }
       endX = startX - tickLineStyles.length
     }
-    return ticks.map(tick => ({
+    return ticks.map((tick) => ({
       coordinates: [
         { x: startX, y: tick.coord },
         { x: endX, y: tick.coord }
@@ -78,7 +76,7 @@ export default class YAxisView extends AxisView<YAxis> {
     }))
   }
 
-  override createTickTexts (ticks: AxisTick[], bounding: Bounding, styles: AxisStyle): TextAttrs[] {
+  override createTickTexts(ticks: AxisTick[], bounding: Bounding, styles: AxisStyle): TextAttrs[] {
     const yAxis = this.getAxis()
     const axisLineStyles = styles.axisLine
     const tickLineStyles = styles.tickLine
@@ -103,7 +101,7 @@ export default class YAxisView extends AxisView<YAxis> {
       }
     }
     const textAlign = this.getAxis().isFromZero() ? 'left' : 'right'
-    return ticks.map(tick => ({
+    return ticks.map((tick) => ({
       x,
       y: tick.coord,
       text: tick.text,

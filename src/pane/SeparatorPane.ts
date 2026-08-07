@@ -12,18 +12,15 @@
  * limitations under the License.
  */
 
-import { UpdateLevel } from '../common/Updater'
-import type Bounding from '../common/Bounding'
-import { merge } from '../common/utils/typeChecks'
-import { createDom } from '../common/utils/dom'
-import { getPixelRatio } from '../common/utils/canvas'
-
 import type Chart from '../Chart'
-
+import type Bounding from '../common/Bounding'
+import { UpdateLevel } from '../common/Updater'
+import { getPixelRatio } from '../common/utils/canvas'
+import { createDom } from '../common/utils/dom'
+import { merge } from '../common/utils/typeChecks'
+import SeparatorWidget from '../widget/SeparatorWidget'
 import type DrawPane from './DrawPane'
 import Pane from './Pane'
-
-import SeparatorWidget from '../widget/SeparatorWidget'
 
 export default class SeparatorPane extends Pane {
   private _topPane: DrawPane
@@ -31,7 +28,7 @@ export default class SeparatorPane extends Pane {
 
   private readonly _separatorWidget: SeparatorWidget
 
-  constructor (chart: Chart, id: string, topPane: DrawPane, bottomPane: DrawPane) {
+  constructor(chart: Chart, id: string, topPane: DrawPane, bottomPane: DrawPane) {
     super(chart, id)
     this.getContainer().style.overflow = ''
     this._topPane = topPane
@@ -39,32 +36,34 @@ export default class SeparatorPane extends Pane {
     this._separatorWidget = new SeparatorWidget(this.getContainer(), this)
   }
 
-  override setBounding (rootBounding: Partial<Bounding>): Pane {
+  override setBounding(rootBounding: Partial<Bounding>): Pane {
     merge(this.getBounding(), rootBounding)
     return this
   }
 
-  getTopPane (): DrawPane {
+  getTopPane(): DrawPane {
     return this._topPane
   }
 
-  setTopPane (pane: DrawPane): Pane {
+  setTopPane(pane: DrawPane): Pane {
     this._topPane = pane
     return this
   }
 
-  getBottomPane (): DrawPane {
+  getBottomPane(): DrawPane {
     return this._bottomPane
   }
 
-  setBottomPane (pane: DrawPane): Pane {
+  setBottomPane(pane: DrawPane): Pane {
     this._bottomPane = pane
     return this
   }
 
-  getWidget (): SeparatorWidget { return this._separatorWidget }
+  getWidget(): SeparatorWidget {
+    return this._separatorWidget
+  }
 
-  override getImage (_includeOverlay: boolean): HTMLCanvasElement {
+  override getImage(_includeOverlay: boolean): HTMLCanvasElement {
     const { width, height } = this.getBounding()
 
     const styles = this.getChart().getStyles().separator
@@ -83,7 +82,7 @@ export default class SeparatorPane extends Pane {
     return canvas
   }
 
-  override updateImp (level: UpdateLevel, container: HTMLElement, bounding: Bounding): void {
+  override updateImp(level: UpdateLevel, container: HTMLElement, bounding: Bounding): void {
     if (level === UpdateLevel.All || level === UpdateLevel.Separator) {
       const styles = this.getChart().getStyles().separator
       container.style.backgroundColor = styles.color

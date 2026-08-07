@@ -12,20 +12,19 @@
  * limitations under the License.
  */
 
-import type Nullable from '../common/Nullable'
-import type DeepPartial from '../common/DeepPartial'
-import type ExcludePickPartial from '../common/ExcludePickPartial'
-import type Point from '../common/Point'
-import type Coordinate from '../common/Coordinate'
+import type { Chart } from '../Chart'
 import type Bounding from '../common/Bounding'
-import type { OverlayStyle } from '../common/Styles'
+import type Coordinate from '../common/Coordinate'
+import type DeepPartial from '../common/DeepPartial'
 import type { MouseTouchEvent } from '../common/EventHandler'
+import type ExcludePickPartial from '../common/ExcludePickPartial'
+import type Nullable from '../common/Nullable'
+import type Point from '../common/Point'
+import type { OverlayStyle } from '../common/Styles'
 import { clone, isArray, isBoolean, isNumber, isString, isValid, merge } from '../common/utils/typeChecks'
-
+import type ChartStore from '../Store'
 import type { XAxis } from './XAxis'
 import type { YAxis } from './YAxis'
-import type ChartStore from '../Store'
-import type { Chart } from '../Chart'
 
 export type OverlayMode = 'normal' | 'weak_magnet' | 'strong_magnet'
 
@@ -62,10 +61,7 @@ export interface OverlayEventCollection<E> {
   onDeselected: Nullable<OverlayEventCallback<E>>
 }
 
-export function checkOverlayFigureEvent (
-  targetEventType: keyof Omit<OverlayEventCollection<unknown>, 'onDrawStart' | 'onDrawing' | 'onDrawEnd' | 'onRemoved'>,
-  figure: Nullable<OverlayFigure>
-): boolean {
+export function checkOverlayFigureEvent(targetEventType: keyof Omit<OverlayEventCollection<unknown>, 'onDrawStart' | 'onDrawing' | 'onDrawEnd' | 'onRemoved'>, figure: Nullable<OverlayFigure>): boolean {
   const ignoreEvent = figure?.ignoreEvent ?? false
   if (isBoolean(ignoreEvent)) {
     return !ignoreEvent
@@ -281,24 +277,17 @@ export default class OverlayImp<E = unknown> implements Overlay<E> {
   private _prevPressedPoint: Nullable<Partial<Point>> = null
   private _prevPressedPoints: Array<Partial<Point>> = []
 
-  constructor (overlay: OverlayTemplate<E>) {
+  constructor(overlay: OverlayTemplate<E>) {
     this.override(overlay)
   }
 
-  override (overlay: Partial<Overlay<E>>): void {
+  override(overlay: Partial<Overlay<E>>): void {
     this._prevOverlay = clone({
       ...this,
       _prevOverlay: null
     })
 
-    const {
-      id,
-      name,
-      currentStep: _,
-      points,
-      styles,
-      ...others
-    } = overlay
+    const { id, name, currentStep: _, points, styles, ...others } = overlay
 
     merge(this, others)
 
@@ -332,22 +321,22 @@ export default class OverlayImp<E = unknown> implements Overlay<E> {
     }
   }
 
-  getPrevZLevel (): number { return this._prevZLevel }
+  getPrevZLevel(): number {
+    return this._prevZLevel
+  }
 
-  setPrevZLevel (zLevel: number): void { this._prevZLevel = zLevel }
+  setPrevZLevel(zLevel: number): void {
+    this._prevZLevel = zLevel
+  }
 
-  shouldUpdate (): { draw: boolean, sort: boolean } {
+  shouldUpdate(): { draw: boolean; sort: boolean } {
     const sort = this._prevOverlay.zLevel !== this.zLevel
-    const draw = sort ||
-      JSON.stringify(this._prevOverlay.points) !== JSON.stringify(this.points) ||
-      this._prevOverlay.visible !== this.visible ||
-      this._prevOverlay.extendData !== this.extendData ||
-      this._prevOverlay.styles !== this.styles
+    const draw = sort || JSON.stringify(this._prevOverlay.points) !== JSON.stringify(this.points) || this._prevOverlay.visible !== this.visible || this._prevOverlay.extendData !== this.extendData || this._prevOverlay.styles !== this.styles
 
     return { sort, draw }
   }
 
-  nextStep (): void {
+  nextStep(): void {
     if (this.currentStep === this.totalStep - 1) {
       this.currentStep = OVERLAY_DRAW_STEP_FINISHED
     } else {
@@ -355,26 +344,26 @@ export default class OverlayImp<E = unknown> implements Overlay<E> {
     }
   }
 
-  forceComplete (): void {
+  forceComplete(): void {
     this.currentStep = OVERLAY_DRAW_STEP_FINISHED
   }
 
-  isDrawing (): boolean {
+  isDrawing(): boolean {
     return this.currentStep !== OVERLAY_DRAW_STEP_FINISHED
   }
 
-  isStart (): boolean {
+  isStart(): boolean {
     return this.currentStep === OVERLAY_DRAW_STEP_START
   }
 
-  isContinuousDrawingMode (): boolean {
+  isContinuousDrawingMode(): boolean {
     return this.drawingMode === 'continuous'
   }
 
   /**
    * Start continuous drawing - set first point
    */
-  startContinuousDrawing (point: Partial<Point>): void {
+  startContinuousDrawing(point: Partial<Point>): void {
     this.points = []
     this.continuousDrawingModeEventMoveForDrawing(point)
     this.currentStep = 2 // Mark as actively drawing
@@ -383,7 +372,7 @@ export default class OverlayImp<E = unknown> implements Overlay<E> {
   /**
    * Add a point during continuous drawing mode
    */
-  continuousDrawingModeEventMoveForDrawing (point: Partial<Point>): boolean {
+  continuousDrawingModeEventMoveForDrawing(point: Partial<Point>): boolean {
     const newPoint: Partial<Point> = {}
     if (isNumber(point.timestamp)) {
       newPoint.timestamp = point.timestamp
@@ -398,7 +387,7 @@ export default class OverlayImp<E = unknown> implements Overlay<E> {
     return true
   }
 
-  stepDrawingModeEventMoveForDrawing (point: Partial<Point>): void {
+  stepDrawingModeEventMoveForDrawing(point: Partial<Point>): void {
     const pointIndex = this.currentStep - 1
     const newPoint: Partial<Point> = {}
     if (isNumber(point.timestamp)) {
@@ -420,8 +409,10 @@ export default class OverlayImp<E = unknown> implements Overlay<E> {
     })
   }
 
-  eventPressedPointMove (point: Partial<Point>, pointIndex: number): void {
-    this.points[pointIndex].timestamp = point.timestamp
+  eventPressedPointMove(point: Partial<Point>, pointIndex: number): void {
+    if (isNumber(point.timestamp)) {
+      this.points[pointIndex].timestamp = point.timestamp
+    }
     if (isNumber(point.dataIndex)) {
       this.points[pointIndex].dataIndex = point.dataIndex
     }
@@ -437,12 +428,12 @@ export default class OverlayImp<E = unknown> implements Overlay<E> {
     })
   }
 
-  startPressedMove (point: Partial<Point>): void {
+  startPressedMove(point: Partial<Point>): void {
     this._prevPressedPoint = { ...point }
     this._prevPressedPoints = clone(this.points)
   }
 
-  eventPressedOtherMove (point: Partial<Point>, chartStore: ChartStore): void {
+  eventPressedOtherMove(point: Partial<Point>, chartStore: ChartStore): void {
     if (this._prevPressedPoint !== null) {
       let difDataIndex: Nullable<number> = null
       if (isNumber(point.dataIndex) && isNumber(this._prevPressedPoint.dataIndex)) {
@@ -452,18 +443,12 @@ export default class OverlayImp<E = unknown> implements Overlay<E> {
       if (isNumber(point.value) && isNumber(this._prevPressedPoint.value)) {
         difValue = point.value - this._prevPressedPoint.value
       }
-      this.points = this._prevPressedPoints.map(p => {
+      this.points = this._prevPressedPoints.map((p) => {
         const newPoint = { ...p }
         if (isNumber(difDataIndex) && (isNumber(p.dataIndex) || isNumber(p.timestamp))) {
-          const dataIndex = isNumber(p.timestamp)
-            ? this.isContinuousDrawingMode()
-              ? chartStore.timestampToFloatIndex(p.timestamp)
-              : chartStore.timestampToDataIndex(p.timestamp)
-            : p.dataIndex!
+          const dataIndex = isNumber(p.timestamp) ? (this.isContinuousDrawingMode() ? chartStore.timestampToFloatIndex(p.timestamp) : chartStore.timestampToDataIndex(p.timestamp)) : p.dataIndex!
           newPoint.dataIndex = dataIndex + difDataIndex
-          newPoint.timestamp = this.isContinuousDrawingMode()
-            ? chartStore.floatIndexToTimestamp(newPoint.dataIndex) ?? undefined
-            : chartStore.dataIndexToTimestamp(newPoint.dataIndex) ?? undefined
+          newPoint.timestamp = this.isContinuousDrawingMode() ? (chartStore.floatIndexToTimestamp(newPoint.dataIndex) ?? undefined) : (chartStore.dataIndexToTimestamp(newPoint.dataIndex) ?? undefined)
         }
         if (isNumber(difValue) && isNumber(p.value)) {
           newPoint.value = p.value + difValue
@@ -473,9 +458,9 @@ export default class OverlayImp<E = unknown> implements Overlay<E> {
     }
   }
 
-  static extend<E = unknown> (template: OverlayTemplate<E>): OverlayInnerConstructor<E> {
+  static extend<E = unknown>(template: OverlayTemplate<E>): OverlayInnerConstructor<E> {
     class Custom extends OverlayImp<E> {
-      constructor () {
+      constructor() {
         super(template)
       }
     }

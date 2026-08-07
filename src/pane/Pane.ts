@@ -12,13 +12,12 @@
  * limitations under the License.
  */
 
-import type Updater from '../common/Updater'
-import { UpdateLevel } from '../common/Updater'
+import type Chart from '../Chart'
 import type Bounding from '../common/Bounding'
 import { createDefaultBounding } from '../common/Bounding'
+import type Updater from '../common/Updater'
+import { UpdateLevel } from '../common/Updater'
 import { createDom } from '../common/utils/dom'
-
-import type Chart from '../Chart'
 
 export default abstract class Pane implements Updater {
   private readonly _container: HTMLElement
@@ -27,7 +26,7 @@ export default abstract class Pane implements Updater {
 
   private readonly _bounding = createDefaultBounding()
 
-  constructor (chart: Chart, id: string) {
+  constructor(chart: Chart, id: string) {
     this._chart = chart
     this._id = id
     this._container = createDom('div', {
@@ -40,32 +39,32 @@ export default abstract class Pane implements Updater {
     })
   }
 
-  getContainer (): HTMLElement {
+  getContainer(): HTMLElement {
     return this._container
   }
 
-  getId (): string {
+  getId(): string {
     return this._id
   }
 
-  getChart (): Chart {
+  getChart(): Chart {
     return this._chart
   }
 
-  getBounding (): Bounding {
+  getBounding(): Bounding {
     return this._bounding
   }
 
-  update (level?: UpdateLevel): void {
+  update(level?: UpdateLevel): void {
     if (this._bounding.height !== this._container.clientHeight) {
       this._container.style.height = `${this._bounding.height}px`
     }
     this.updateImp(level ?? UpdateLevel.Drawer, this._container, this._bounding)
   }
 
-  abstract setBounding (...bounding: Array<Partial<Bounding>>): Pane
+  abstract setBounding(...bounding: Array<Partial<Bounding>>): Pane
 
-  abstract getImage (includeOverlay: boolean): HTMLCanvasElement
+  abstract getImage(includeOverlay: boolean): HTMLCanvasElement
 
-  abstract updateImp (level: UpdateLevel, container: HTMLElement, bounding: Bounding): void
+  abstract updateImp(level: UpdateLevel, container: HTMLElement, bounding: Bounding): void
 }

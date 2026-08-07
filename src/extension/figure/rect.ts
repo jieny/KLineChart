@@ -17,9 +17,9 @@ import type { RectStyle } from '../../common/Styles'
 import { isTransparent } from '../../common/utils/color'
 import { isString } from '../../common/utils/typeChecks'
 
-import { type FigureTemplate, DEVIATION } from '../../component/Figure'
+import { DEVIATION, type FigureTemplate } from '../../component/Figure'
 
-export function checkCoordinateOnRect (coordinate: Coordinate, attrs: RectAttrs | RectAttrs[]): boolean {
+export function checkCoordinateOnRect(coordinate: Coordinate, attrs: RectAttrs | RectAttrs[]): boolean {
   let rects: RectAttrs[] = []
   rects = rects.concat(attrs)
   for (const rect of rects) {
@@ -35,31 +35,17 @@ export function checkCoordinateOnRect (coordinate: Coordinate, attrs: RectAttrs 
       y -= DEVIATION
       height = DEVIATION * 2
     }
-    if (
-      coordinate.x >= x &&
-      coordinate.x <= x + width &&
-      coordinate.y >= y &&
-      coordinate.y <= y + height
-    ) {
+    if (coordinate.x >= x && coordinate.x <= x + width && coordinate.y >= y && coordinate.y <= y + height) {
       return true
     }
   }
   return false
 }
 
-export function drawRect (ctx: CanvasRenderingContext2D, attrs: RectAttrs | RectAttrs[], styles: Partial<RectStyle>): void {
+export function drawRect(ctx: CanvasRenderingContext2D, attrs: RectAttrs | RectAttrs[], styles: Partial<RectStyle>): void {
   let rects: RectAttrs[] = []
   rects = rects.concat(attrs)
-  const {
-    style = 'fill',
-    color = 'transparent',
-    borderSize = 1,
-    borderColor = 'transparent',
-    borderStyle = 'solid',
-    borderRadius: r = 0,
-    borderDashedValue = [2, 2]
-  } = styles
-  // eslint-disable-next-line @typescript-eslint/unbound-method, @typescript-eslint/no-unnecessary-condition -- ignore
+  const { style = 'fill', color = 'transparent', borderSize = 1, borderColor = 'transparent', borderStyle = 'solid', borderRadius: r = 0, borderDashedValue = [2, 2] } = styles
   const draw = ctx.roundRect ?? ctx.rect
   const solid = (style === 'fill' || styles.style === 'stroke_fill') && (!isString(color) || !isTransparent(color))
   if (solid) {

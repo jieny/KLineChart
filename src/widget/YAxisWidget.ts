@@ -12,18 +12,15 @@
  * limitations under the License.
  */
 
-import type DrawPane from '../pane/DrawPane'
-
-import { WidgetNameConstants } from './types'
-import DrawWidget from './DrawWidget'
-
 import type { YAxis } from '../component/YAxis'
-
-import YAxisView from '../view/YAxisView'
+import type DrawPane from '../pane/DrawPane'
 import CandleLastPriceLabelView from '../view/CandleLastPriceLabelView'
+import CrosshairHorizontalLabelView from '../view/CrosshairHorizontalLabelView'
 import IndicatorLastValueView from '../view/IndicatorLastValueView'
 import OverlayYAxisView from '../view/OverlayYAxisView'
-import CrosshairHorizontalLabelView from '../view/CrosshairHorizontalLabelView'
+import YAxisView from '../view/YAxisView'
+import DrawWidget from './DrawWidget'
+import { WidgetNameConstants } from './types'
 
 export default class YAxisWidget extends DrawWidget<DrawPane<YAxis>> {
   private readonly _yAxis: YAxis
@@ -33,22 +30,22 @@ export default class YAxisWidget extends DrawWidget<DrawPane<YAxis>> {
   private readonly _overlayYAxisView = new OverlayYAxisView(this)
   private readonly _crosshairHorizontalLabelView = new CrosshairHorizontalLabelView(this)
 
-  constructor (rootContainer: HTMLElement, pane: DrawPane<YAxis>, yAxis: YAxis) {
+  constructor(rootContainer: HTMLElement, pane: DrawPane<YAxis>, yAxis: YAxis) {
     super(rootContainer, pane)
     this._yAxis = yAxis
     this.setCursor('ns-resize')
     this.addChild(this._overlayYAxisView)
   }
 
-  getAxisComponent (): YAxis {
+  getAxisComponent(): YAxis {
     return this._yAxis
   }
 
-  override getName (): string {
+  override getName(): string {
     return WidgetNameConstants.Y_AXIS
   }
 
-  override updateMain (ctx: CanvasRenderingContext2D): void {
+  override updateMain(ctx: CanvasRenderingContext2D): void {
     this._yAxisView.draw(ctx)
     const pane = this.getPane()
     const isCandleLastPriceLabelVisibleYAxis = pane.isDefaultYAxis(this._yAxis.id) || pane.isManualYAxis(this._yAxis.id)
@@ -58,7 +55,7 @@ export default class YAxisWidget extends DrawWidget<DrawPane<YAxis>> {
     this._indicatorLastValueView.draw(ctx)
   }
 
-  override updateOverlay (ctx: CanvasRenderingContext2D): void {
+  override updateOverlay(ctx: CanvasRenderingContext2D): void {
     this._overlayYAxisView.draw(ctx)
     this._crosshairHorizontalLabelView.draw(ctx)
   }

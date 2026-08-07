@@ -12,31 +12,34 @@
  * limitations under the License.
  */
 
-import type Nullable from '../common/Nullable'
+import type { Chart } from '../Chart'
+import type BarSpace from '../common/BarSpace'
+import type Bounding from '../common/Bounding'
+import type Crosshair from '../common/Crosshair'
+import type { KLineData, NeighborData } from '../common/Data'
+import type { DataLoadType } from '../common/DataLoader'
 import type DeepPartial from '../common/DeepPartial'
 import type ExcludePickPartial from '../common/ExcludePickPartial'
-import type { KLineData, NeighborData } from '../common/Data'
-import type Bounding from '../common/Bounding'
-import type BarSpace from '../common/BarSpace'
-import type Crosshair from '../common/Crosshair'
-import type { IndicatorStyle, IndicatorPolygonStyle, SmoothLineStyle, RectStyle, TextStyle, TooltipFeatureStyle, LineType, TooltipLegend } from '../common/Styles'
-import { isNumber, isValid, merge, isBoolean, isString, clone, isFunction } from '../common/utils/typeChecks'
-import type { DataLoadType } from '../common/DataLoader'
-
+import type Nullable from '../common/Nullable'
+import type { IndicatorPolygonStyle, IndicatorStyle, RectStyle, SmoothLineStyle, TextStyle, TooltipFeatureStyle, TooltipLegend } from '../common/Styles'
+import { formatValue } from '../common/utils/format'
+import { clone, isBoolean, isFunction, isNumber, isString, isValid, merge } from '../common/utils/typeChecks'
+import type { ArcAttrs } from '../extension/figure/arc'
+import type { LineAttrs } from '../extension/figure/line'
+import type { RectAttrs } from '../extension/figure/rect'
+import type { TextAttrs } from '../extension/figure/text'
 import type { XAxis } from './XAxis'
 import type { YAxis } from './YAxis'
 
-import { formatValue } from '../common/utils/format'
-
-import type { ArcAttrs } from '../extension/figure/arc'
-import type { RectAttrs } from '../extension/figure/rect'
-import type { TextAttrs } from '../extension/figure/text'
-import type { Chart } from '../Chart'
-import type { LineAttrs } from '../extension/figure/line'
-
 export type IndicatorSeries = 'normal' | 'price' | 'volume'
 
-export type IndicatorFigureStyle = Partial<Omit<SmoothLineStyle, 'style'>> & Partial<Omit<RectStyle, 'style'>> & Partial<TextStyle> & Partial<{ style: LineType[keyof LineType] }> & Record<string, unknown>
+type IndicatorFigureStyleBase = Omit<SmoothLineStyle, 'style'> &
+  Omit<RectStyle, 'style' | 'color'> &
+  Omit<TextStyle, 'style'> & {
+    style: SmoothLineStyle['style'] | RectStyle['style'] | TextStyle['style']
+  }
+
+export type IndicatorFigureStyle = Partial<IndicatorFigureStyleBase> & Record<string, unknown>
 
 export type IndicatorFigureAttrs = Partial<ArcAttrs> & Partial<LineAttrs> & Partial<RectAttrs> & Partial<TextAttrs> & Record<string, unknown>
 
@@ -103,7 +106,7 @@ export type IndicatorDrawCallback<D, C, E> = (params: IndicatorDrawParams<D, C, 
 
 export type IndicatorCalcCallback<D, C, E> = (dataList: KLineData[], indicator: Indicator<D, C, E>, dataListForIndicator: KLineData[]) => Promise<D[]> | D[]
 
-export type IndicatorShouldUpdateCallback<D, C, E> = (prev: Indicator<D, C, E>, current: Indicator<D, C, E>) => (boolean | { calc: boolean, draw: boolean })
+export type IndicatorShouldUpdateCallback<D, C, E> = (prev: Indicator<D, C, E>, current: Indicator<D, C, E>) => boolean | { calc: boolean; draw: boolean }
 
 export type IndicatorDataState = 'loading' | 'error' | 'ready'
 
@@ -243,13 +246,7 @@ export type IndicatorConstructor<D = unknown, C = unknown, E = unknown> = new ()
 
 export type EachFigureCallback<D> = (figure: IndicatorFigure<D>, figureStyles: IndicatorFigureStyle, index: number) => void
 
-export function eachFigures<D = unknown> (
-  indicator: Indicator,
-  dataIndex: number,
-  barSpace: BarSpace,
-  defaultStyles: IndicatorStyle,
-  eachFigureCallback: EachFigureCallback<D>
-): void {
+export function eachFigures<D = unknown>(indicator: Indicator<D>, dataIndex: number, barSpace: BarSpace, defaultStyles: IndicatorStyle, eachFigureCallback: EachFigureCallback<D>): void {
   const result = indicator.result
   const figures = indicator.figures
   const styles = indicator.styles
@@ -271,10 +268,9 @@ export function eachFigures<D = unknown> (
   let barCount = 0
   let lineCount = 0
 
-  // eslint-disable-next-line @typescript-eslint/init-declarations  -- ignore
-  let defaultFigureStyles
+  let defaultFigureStyles: SmoothLineStyle | TextStyle | IndicatorFigureStyle
   let figureIndex = 0
-  figures.forEach(figure => {
+  figures.forEach((figure) => {
     switch (figure.type) {
       case 'text': {
         figureIndex = textCount
@@ -302,7 +298,9 @@ export function eachFigures<D = unknown> (
         lineCount++
         break
       }
-      default: { break }
+      default: {
+        break
+      }
     }
     if (isValid(figure.type)) {
       const ss = figure.styles?.({
@@ -315,7 +313,6 @@ export function eachFigures<D = unknown> (
         barSpace,
         defaultStyles
       })
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- ignore
       eachFigureCallback(figure, { ...defaultFigureStyles, ...ss }, figureIndex)
     }
   })
@@ -340,10 +337,9 @@ export default class IndicatorImp<D = unknown, C = unknown, E = unknown> impleme
   maxValue: Nullable<number> = null
   styles: Nullable<Partial<IndicatorStyle>> = null
   shouldUpdate: IndicatorShouldUpdateCallback<D, C, E> = (prev, current) => {
-    const calc = JSON.stringify(prev.calcParams) !== JSON.stringify(current.calcParams) ||
-      prev.figures !== current.figures ||
-      prev.calc !== current.calc
-    const draw = calc ||
+    const calc = JSON.stringify(prev.calcParams) !== JSON.stringify(current.calcParams) || prev.figures !== current.figures || prev.calc !== current.calc
+    const draw =
+      calc ||
       prev.shortName !== current.shortName ||
       prev.paneId !== current.paneId ||
       prev.yAxisId !== current.yAxisId ||
@@ -373,31 +369,21 @@ export default class IndicatorImp<D = unknown, C = unknown, E = unknown> impleme
   private _prevIndicator: Indicator<D, C, E>
   private _lockSeriesPrecision = false
 
-  constructor (indicator: IndicatorTemplate<D, C, E>) {
+  constructor(indicator: IndicatorTemplate<D, C, E>) {
     this.override(indicator)
     this._lockSeriesPrecision = false
   }
 
-  override (indicator: Partial<Indicator<D, C, E>>): void {
+  override(indicator: Partial<Indicator<D, C, E>>): void {
     const { result, _prevIndicator, ...currentOthers } = this
     this._prevIndicator = { ...clone(currentOthers), result }
-    const {
-      id,
-      name,
-      shortName,
-      precision,
-      styles,
-      figures,
-      calcParams,
-      ...others
-    } = indicator
+    const { id, name, shortName, precision, styles, figures, calcParams, ...others } = indicator
     if (!isString(this.id) && isString(id)) {
       this.id = id
     }
     if (!isString(this.name)) {
       this.name = name ?? ''
     }
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition  -- ignore
     this.shortName = shortName ?? this.shortName ?? this.name
     if (isNumber(precision)) {
       this.precision = precision
@@ -418,13 +404,13 @@ export default class IndicatorImp<D = unknown, C = unknown, E = unknown> impleme
     this.figures = figures ?? this.figures
   }
 
-  setSeriesPrecision (precision: number): void {
+  setSeriesPrecision(precision: number): void {
     if (!this._lockSeriesPrecision) {
       this.precision = precision
     }
   }
 
-  shouldUpdateImp (): ({ calc: boolean, draw: boolean, sort: boolean }) {
+  shouldUpdateImp(): { calc: boolean; draw: boolean; sort: boolean } {
     const sort = this._prevIndicator.zLevel !== this.zLevel
     const result = this.shouldUpdate(this._prevIndicator, this)
     if (isBoolean(result)) {
@@ -433,19 +419,19 @@ export default class IndicatorImp<D = unknown, C = unknown, E = unknown> impleme
     return { ...result, sort }
   }
 
-  async calcImp (dataList: KLineData[], dataListForIndicator: KLineData[]): Promise<boolean> {
+  async calcImp(dataList: KLineData[], dataListForIndicator: KLineData[]): Promise<boolean> {
     try {
       const result = await this.calc(dataList, this, dataListForIndicator)
       this.result = result
       return true
-    } catch (e) {
+    } catch {
       return false
     }
   }
 
-  static extend<D = unknown> (template: IndicatorTemplate<D>): IndicatorConstructor<D> {
+  static extend<D = unknown>(template: IndicatorTemplate<D>): IndicatorConstructor<D> {
     class Custom extends IndicatorImp<D> {
-      constructor () {
+      constructor() {
         super(template)
       }
     }

@@ -12,16 +12,15 @@
  * limitations under the License.
  */
 
-import type Coordinate from '../common/Coordinate'
-import type { GradientColor } from '../common/Styles'
 import Animation from '../common/Animation'
-import { isNumber, isArray, isValid } from '../common/utils/typeChecks'
+import type Coordinate from '../common/Coordinate'
+import type Nullable from '../common/Nullable'
+import type { GradientColor } from '../common/Styles'
 import { UpdateLevel } from '../common/Updater'
-
-import ChildrenView from './ChildrenView'
+import { isArray, isNumber, isValid } from '../common/utils/typeChecks'
 
 import { lineTo } from '../extension/figure/line'
-import type Nullable from '../common/Nullable'
+import ChildrenView from './ChildrenView'
 
 export default class CandleAreaView extends ChildrenView {
   private readonly _ripplePoint = this.createFigure({
@@ -44,7 +43,7 @@ export default class CandleAreaView extends ChildrenView {
     pane.getChart().updatePane(UpdateLevel.Main, pane.getId())
   })
 
-  override drawImp (ctx: CanvasRenderingContext2D): void {
+  override drawImp(ctx: CanvasRenderingContext2D): void {
     const widget = this.getWidget()
     const pane = widget.getPane()
     const chart = pane.getChart()
@@ -83,8 +82,7 @@ export default class CandleAreaView extends ChildrenView {
           size: styles.lineSize,
           smooth: styles.smooth
         }
-      }
-      )?.draw(ctx)
+      })?.draw(ctx)
 
       // render area
       const backgroundColor = styles.backgroundColor
@@ -95,7 +93,8 @@ export default class CandleAreaView extends ChildrenView {
           backgroundColor.forEach(({ offset, color }) => {
             gradient.addColorStop(offset, color)
           })
-        } catch (e) {
+        } catch {
+          // Ignore invalid gradient stops.
         }
         color = gradient
       } else {
@@ -126,9 +125,12 @@ export default class CandleAreaView extends ChildrenView {
         }
       })?.draw(ctx)
       let rippleRadius = pointStyles.rippleRadius
-      if (pointStyles.animation) {
-        rippleRadius = pointStyles.radius + this._animationFrameTime / pointStyles.animationDuration * (pointStyles.rippleRadius - pointStyles.radius)
+      if (pointStyles.animation && isNumber(pointStyles.animationDuration) && pointStyles.animationDuration > 0) {
+        const progress = Math.min(this._animationFrameTime / pointStyles.animationDuration, 1)
+        rippleRadius = pointStyles.radius + progress * (pointStyles.rippleRadius - pointStyles.radius)
         this._animation.setDuration(pointStyles.animationDuration).start()
+      } else {
+        this.stopAnimation()
       }
       this._ripplePoint
         ?.setAttrs({
@@ -136,13 +138,15 @@ export default class CandleAreaView extends ChildrenView {
           y: ripplePointCoordinate!.y,
           r: rippleRadius
         })
-        .setStyles({ style: 'fill', color: pointStyles.rippleColor }).draw(ctx)
+        .setStyles({ style: 'fill', color: pointStyles.rippleColor })
+        .draw(ctx)
     } else {
       this.stopAnimation()
     }
   }
 
-  stopAnimation (): void {
-    this._animation.stop()
+  stopAnimation(): void {
+    this._animationFrameTime = 0
+    this._animation.cancel()
   }
 }

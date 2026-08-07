@@ -12,16 +12,14 @@
  * limitations under the License.
  */
 
-import type Nullable from '../common/Nullable'
 import type Bounding from '../common/Bounding'
-import { isFunction, isNumber, isString } from '../common/utils/typeChecks'
-
-import AxisImp, { type Axis, type AxisRange, type AxisTick, TICK_COUNT, type AxisOverride } from './Axis'
-
-import type DrawPane from '../pane/DrawPane'
-import { calcTextWidth } from '../common/utils/canvas'
+import type Nullable from '../common/Nullable'
 import { PeriodTypeXAxisFormat } from '../common/Period'
 import type PickRequired from '../common/PickRequired'
+import { calcTextWidth } from '../common/utils/canvas'
+import { isFunction, isNumber, isString } from '../common/utils/typeChecks'
+import type DrawPane from '../pane/DrawPane'
+import AxisImp, { type Axis, type AxisOverride, type AxisRange, type AxisTick, TICK_COUNT } from './Axis'
 
 export type XAxisOverride = Pick<AxisOverride, 'name' | 'scrollZoomEnabled' | 'createTicks'>
 
@@ -35,17 +33,13 @@ export interface XAxis extends Axis, Required<XAxisTemplate> {
 export type XAxisConstructor = new (parent: DrawPane) => XAxis
 
 export default abstract class XAxisImp extends AxisImp implements XAxis {
-  constructor (parent: DrawPane, xAxis: XAxisTemplate) {
+  constructor(parent: DrawPane, xAxis: XAxisTemplate) {
     super(parent)
     this.override(xAxis)
   }
 
-  override (xAxis: AxisOverride): void {
-    const {
-      name,
-      scrollZoomEnabled,
-      createTicks
-    } = xAxis
+  override(xAxis: AxisOverride): void {
+    const { name, scrollZoomEnabled, createTicks } = xAxis
     if (!isString(this.name) && isString(name)) {
       this.name = name
     }
@@ -53,7 +47,7 @@ export default abstract class XAxisImp extends AxisImp implements XAxis {
     this.createTicks = createTicks ?? this.createTicks
   }
 
-  protected override createRangeImp (): AxisRange {
+  protected override createRangeImp(): AxisRange {
     const chartStore = this.getParent().getChart().getChartStore()
     const visibleDataRange = chartStore.getVisibleRange()
     const { realFrom, realTo } = visibleDataRange
@@ -74,7 +68,7 @@ export default abstract class XAxisImp extends AxisImp implements XAxis {
     return range
   }
 
-  protected override createTicksImp (): AxisTick[] {
+  protected override createTicksImp(): AxisTick[] {
     const { realFrom, realTo, from } = this.getRange()
     const chartStore = this.getParent().getChart().getChartStore()
     const formatDate = chartStore.getInnerFormatter().formatDate
@@ -113,7 +107,7 @@ export default abstract class XAxisImp extends AxisImp implements XAxis {
     return ticks
   }
 
-  override getAutoSize (): number {
+  override getAutoSize(): number {
     const styles = this.getParent().getChart().getStyles()
     const xAxisStyles = styles.xAxis
     const height = xAxisStyles.size
@@ -130,52 +124,43 @@ export default abstract class XAxisImp extends AxisImp implements XAxis {
         xAxisHeight += xAxisStyles.tickLine.length
       }
       if (xAxisStyles.tickText.show) {
-        xAxisHeight += (xAxisStyles.tickText.marginStart + xAxisStyles.tickText.marginEnd + xAxisStyles.tickText.size)
+        xAxisHeight += xAxisStyles.tickText.marginStart + xAxisStyles.tickText.marginEnd + xAxisStyles.tickText.size
       }
     }
     let crosshairVerticalTextHeight = 0
-    if (
-      crosshairStyles.show &&
-      crosshairStyles.vertical.show &&
-      crosshairStyles.vertical.text.show
-    ) {
-      crosshairVerticalTextHeight += (
-        crosshairStyles.vertical.text.paddingTop +
-        crosshairStyles.vertical.text.paddingBottom +
-        crosshairStyles.vertical.text.borderSize * 2 +
-        crosshairStyles.vertical.text.size
-      )
+    if (crosshairStyles.show && crosshairStyles.vertical.show && crosshairStyles.vertical.text.show) {
+      crosshairVerticalTextHeight += crosshairStyles.vertical.text.paddingTop + crosshairStyles.vertical.text.paddingBottom + crosshairStyles.vertical.text.borderSize * 2 + crosshairStyles.vertical.text.size
     }
     return Math.max(xAxisHeight, crosshairVerticalTextHeight)
   }
 
-  protected override getBounding (): Bounding {
+  protected override getBounding(): Bounding {
     return this.getParent().getMainWidget().getBounding()
   }
 
-  convertTimestampFromPixel (pixel: number): Nullable<number> {
+  convertTimestampFromPixel(pixel: number): Nullable<number> {
     const chartStore = this.getParent().getChart().getChartStore()
     const dataIndex = chartStore.coordinateToDataIndex(pixel)
     return chartStore.dataIndexToTimestamp(dataIndex)
   }
 
-  convertTimestampToPixel (timestamp: number): number {
+  convertTimestampToPixel(timestamp: number): number {
     const chartStore = this.getParent().getChart().getChartStore()
     const dataIndex = chartStore.timestampToDataIndex(timestamp)
     return chartStore.dataIndexToCoordinate(dataIndex)
   }
 
-  convertFromPixel (pixel: number): number {
+  convertFromPixel(pixel: number): number {
     return this.getParent().getChart().getChartStore().coordinateToDataIndex(pixel)
   }
 
-  convertToPixel (value: number): number {
+  convertToPixel(value: number): number {
     return this.getParent().getChart().getChartStore().dataIndexToCoordinate(value)
   }
 
-  static extend (template: XAxisTemplate): XAxisConstructor {
+  static extend(template: XAxisTemplate): XAxisConstructor {
     class Custom extends XAxisImp {
-      constructor (parent: DrawPane) {
+      constructor(parent: DrawPane) {
         super(parent, template)
       }
     }

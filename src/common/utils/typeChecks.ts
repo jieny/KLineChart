@@ -12,36 +12,31 @@
  * limitations under the License.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ignore
-export function merge (target: any, source: any): void {
-  if ((!isObject(target) && !isObject(source))) {
+// biome-ignore lint/suspicious/noExplicitAny: This recursive utility accepts arbitrary object shapes.
+export function merge(target: any, source: any): void {
+  if (!isObject(target) && !isObject(source)) {
     return
   }
   for (const key in source) {
+    // biome-ignore lint/suspicious/noPrototypeBuiltins: Object.hasOwn is unavailable for the ES5 target.
     if (Object.prototype.hasOwnProperty.call(source, key) as boolean) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- ignore
       const targetProp = target[key]
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- ignore
       const sourceProp = source[key]
-      if (
-        isObject(sourceProp) &&
-        isObject(targetProp)
-      ) {
+      if (isObject(sourceProp) && isObject(targetProp)) {
         merge(targetProp, sourceProp)
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- ignore
         target[key] = clone(sourceProp)
       }
     }
   }
 }
 
-export function clone<T> (target: T): T {
+export function clone<T>(target: T): T {
   if (!isObject(target)) {
     return target
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ignore
+  // biome-ignore lint/suspicious/noExplicitAny: The cloned container is populated dynamically.
   let copy: any = null
   if (isArray(target)) {
     copy = []
@@ -49,46 +44,43 @@ export function clone<T> (target: T): T {
     copy = {}
   }
   for (const key in target) {
+    // biome-ignore lint/suspicious/noPrototypeBuiltins: Object.hasOwn is unavailable for the ES5 target.
     if (Object.prototype.hasOwnProperty.call(target, key) as boolean) {
       const v = target[key]
       if (isObject(v)) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- ignore
         copy[key] = clone(v)
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- ignore
         copy[key] = v
       }
     }
   }
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- ignore
   return copy
 }
 
-export function isArray<T = unknown> (value: unknown): value is T[] {
+export function isArray<T = unknown>(value: unknown): value is T[] {
   return Object.prototype.toString.call(value) === '[object Array]'
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- ignore
-export function isFunction<T = (...args: unknown[]) => unknown> (value: unknown): value is T {
+export function isFunction<T = (...args: unknown[]) => unknown>(value: unknown): value is T {
   return typeof value === 'function'
 }
 
-export function isObject (value: unknown): value is object {
-  return (typeof value === 'object') && isValid(value)
+export function isObject(value: unknown): value is object {
+  return typeof value === 'object' && isValid(value)
 }
 
-export function isNumber (value: unknown): value is number {
+export function isNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value)
 }
 
-export function isValid<T> (value: T | null | undefined): value is T {
+export function isValid<T>(value: T | null | undefined): value is T {
   return value !== null && value !== undefined
 }
 
-export function isBoolean (value: unknown): value is boolean {
+export function isBoolean(value: unknown): value is boolean {
   return typeof value === 'boolean'
 }
 
-export function isString (value: unknown): value is string {
+export function isString(value: unknown): value is string {
   return typeof value === 'string'
 }

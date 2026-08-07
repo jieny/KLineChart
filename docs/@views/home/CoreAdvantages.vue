@@ -1,10 +1,10 @@
 <script setup>
-import { computed } from 'vue'
 import { useData, withBase } from 'vitepress'
+import { computed } from 'vue'
 
 import i18n from '../../@i18n'
-import Section from './Section.vue'
 import { useInView } from './composables/useInView.js'
+import Section from './Section.vue'
 
 const { lang, isDark } = useData()
 const { target: bentoRef, isVisible } = useInView()
@@ -33,10 +33,7 @@ function buildItem(index) {
         label: i18n(`view_home_advantage_${index + 1}_metric_2_label`, lang.value)
       }
     ],
-    points: [
-      i18n(`view_home_advantage_${index + 1}_point_1`, lang.value),
-      i18n(`view_home_advantage_${index + 1}_point_2`, lang.value)
-    ]
+    points: [i18n(`view_home_advantage_${index + 1}_point_1`, lang.value), i18n(`view_home_advantage_${index + 1}_point_2`, lang.value)]
   }
 }
 
@@ -53,7 +50,7 @@ const items = computed(() => icons.map((_, index) => buildItem(index)))
       <article
         v-for="(item, index) in items"
         :key="item.title"
-        class="tile home-card home-card--interactive home-card-body home-stagger-item"
+        class="tile home-card home-card-body home-stagger-item"
         :class="`tile-${index + 1}`"
         :style="{ '--stagger-delay': `${index * 0.07}s` }"
       >
@@ -126,11 +123,6 @@ const items = computed(() => icons.map((_, index) => buildItem(index)))
   border-radius: 12px;
   background: color-mix(in srgb, var(--vp-c-bg) 70%, transparent);
   border: 1px solid var(--home-brand-border);
-  transition: border-color .4s var(--home-ease-out);
-}
-
-.tile:hover .metric {
-  border-color: var(--home-brand-border-hover);
 }
 
 .metric strong {
@@ -180,10 +172,15 @@ const items = computed(() => icons.map((_, index) => buildItem(index)))
   }
 }
 
+@media (min-width: 768px) {
+  .bento {
+    gap: var(--home-grid-gap-lg);
+  }
+}
+
 @media (min-width: 960px) {
   .bento {
     grid-template-columns: repeat(12, minmax(0, 1fr));
-    gap: var(--home-grid-gap-lg);
   }
 
   .tile-1,
@@ -196,9 +193,4 @@ const items = computed(() => icons.map((_, index) => buildItem(index)))
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .metric {
-    transition: none;
-  }
-}
 </style>

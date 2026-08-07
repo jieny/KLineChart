@@ -1,10 +1,9 @@
 <script setup>
-import { computed, ref } from 'vue'
 import { useData } from 'vitepress'
-
-import Section from './Section.vue'
-import i18n from '../../@i18n'
+import { computed, ref } from 'vue'
 import Particle from '../../@components/Particle.vue'
+import i18n from '../../@i18n'
+import Section from './Section.vue'
 
 const sponsors = [
   {
@@ -40,7 +39,7 @@ const sponsors = [
     logoStyle: 'max-height: 40px;max-width: 40px;',
     website: 'https://flowlong.aizuda.com/',
     amount: 500
-  },
+  }
 ].sort((a, b) => b.amount - a.amount)
 
 const featuredSponsors = computed(() => sponsors.slice(0, 3))
@@ -91,7 +90,7 @@ function showParticle() {
         <div class="featured">
           <a
             v-if="featuredSponsors[0]"
-            class="featured-main home-card home-card--interactive"
+            class="featured-main home-card home-card--link"
             :href="featuredSponsors[0].website"
             target="_blank"
             rel="noreferrer"
@@ -110,7 +109,7 @@ function showParticle() {
             <a
               v-for="(item, supporterIndex) in featuredSponsors.slice(1)"
               :key="item.name"
-              class="featured-sub home-card home-card--interactive"
+              class="featured-sub home-card home-card--link"
               :href="item.website"
               target="_blank"
               rel="noreferrer"
@@ -135,7 +134,7 @@ function showParticle() {
             <a
               v-for="item in supportingSponsors"
               :key="item.name"
-              class="supporting-item home-card home-card--interactive"
+              class="supporting-item home-card home-card--link"
               :href="item.website"
               target="_blank"
               rel="noreferrer"
@@ -160,7 +159,7 @@ function showParticle() {
   position: relative;
   display: grid;
   width: 100%;
-  gap: 28px;
+  gap: var(--home-grid-gap);
 }
 
 .intro {
@@ -168,7 +167,7 @@ function showParticle() {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 28px 24px;
+  padding: 22px;
 }
 
 .eyebrow {
@@ -198,12 +197,12 @@ function showParticle() {
 
 .board {
   display: grid;
-  gap: 18px;
+  gap: var(--home-grid-gap);
 }
 
 .featured {
   display: grid;
-  gap: 18px;
+  gap: var(--home-grid-gap);
 }
 
 .featured-main,
@@ -217,7 +216,7 @@ function showParticle() {
 
 .featured-main {
   min-height: 220px;
-  padding: 28px;
+  padding: 22px;
   align-items: flex-start;
   justify-content: flex-start;
   text-align: left;
@@ -225,12 +224,12 @@ function showParticle() {
 
 .featured-side {
   display: grid;
-  gap: 18px;
+  gap: var(--home-grid-gap);
 }
 
 .featured-sub {
   min-height: 128px;
-  padding: 22px 24px;
+  padding: 22px;
 }
 
 .tier {
@@ -250,7 +249,6 @@ function showParticle() {
   border: 1px solid color-mix(in srgb, var(--vp-c-brand-1) 12%, var(--vp-c-divider));
   background: var(--home-brand-surface-soft);
   color: var(--vp-c-brand-1);
-  transition: border-color .25s ease, background-color .25s ease, transform .25s ease;
 }
 
 .tier-featured {
@@ -267,11 +265,6 @@ function showParticle() {
   color: color-mix(in srgb, var(--vp-c-brand-1) 84%, var(--vp-c-text-2));
   border-color: color-mix(in srgb, var(--vp-c-brand-1) 16%, var(--vp-c-divider));
   background: color-mix(in srgb, var(--vp-c-bg-soft) 56%, var(--vp-c-bg));
-}
-
-.featured-main:hover .tier-featured,
-.featured-sub:hover .tier-supporter {
-  border-color: color-mix(in srgb, var(--vp-c-brand-1) 28%, var(--vp-c-divider));
 }
 
 .featured-logo {
@@ -327,12 +320,12 @@ function showParticle() {
 
 .supporting-grid {
   display: grid;
-  gap: 12px;
+  gap: var(--home-grid-gap);
 }
 
 .supporting-item {
   min-height: 72px;
-  padding: 0 22px;
+  padding: 22px;
   align-items: center;
 }
 
@@ -382,6 +375,14 @@ function showParticle() {
 }
 
 @media (min-width: 768px) {
+  .sponsor-shell,
+  .board,
+  .featured,
+  .featured-side,
+  .supporting-grid {
+    gap: var(--home-grid-gap-lg);
+  }
+
   .supporting-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -391,7 +392,6 @@ function showParticle() {
   .sponsor-shell {
     grid-template-columns: minmax(280px, 0.78fr) minmax(0, 1.22fr);
     align-items: start;
-    gap: 26px;
   }
 
   .intro {

@@ -12,20 +12,18 @@
  * limitations under the License.
  */
 
-import { isValid } from '../common/utils/typeChecks'
-import { calcTextWidth } from '../common/utils/canvas'
 import type { TextStyle } from '../common/Styles'
 import { SymbolDefaultPrecisionConstants } from '../common/SymbolInfo'
-
-import View from './View'
-
+import { calcTextWidth } from '../common/utils/canvas'
+import { isValid } from '../common/utils/typeChecks'
 import type { FigureCreate } from '../component/Figure'
 import type YAxis from '../component/YAxis'
-import type YAxisWidget from '../widget/YAxisWidget'
 import type { TextAttrs } from '../extension/figure/text'
+import type YAxisWidget from '../widget/YAxisWidget'
+import View from './View'
 
 export default class CandleLastPriceLabelView extends View<YAxis> {
-  override drawImp (ctx: CanvasRenderingContext2D): void {
+  override drawImp(ctx: CanvasRenderingContext2D): void {
     const widget = this.getWidget()
     const pane = widget.getPane()
     const bounding = widget.getBounding()
@@ -62,13 +60,7 @@ export default class CandleLastPriceLabelView extends View<YAxis> {
 
         const textFigures: Array<FigureCreate<TextAttrs, TextStyle>> = []
         const yAxisRange = yAxis.getRange()
-        let priceText = yAxis.displayValueToText(
-          yAxis.realValueToDisplayValue(
-            yAxis.valueToRealValue(close, { range: yAxisRange }),
-            { range: yAxisRange }
-          ),
-          precision
-        )
+        let priceText = yAxis.displayValueToText(yAxis.realValueToDisplayValue(yAxis.valueToRealValue(close, { range: yAxisRange }), { range: yAxisRange }), precision)
         priceText = chartStore.getDecimalFold().format(chartStore.getThousandsSeparator().format(priceText))
         const { paddingLeft, paddingRight, paddingTop, paddingBottom, size, family, weight } = lastPriceMarkTextStyles
         let textWidth = paddingLeft + calcTextWidth(priceText, size, weight, family) + paddingRight
@@ -99,13 +91,13 @@ export default class CandleLastPriceLabelView extends View<YAxis> {
             const textHalfHeight = item.size / 2
             let textY = 0
             if (item.position === 'above_price') {
-              aboveY -= (item.paddingBottom + textHalfHeight)
+              aboveY -= item.paddingBottom + textHalfHeight
               textY = aboveY
-              aboveY -= (textHalfHeight + item.paddingTop)
+              aboveY -= textHalfHeight + item.paddingTop
             } else {
-              belowY += (item.paddingTop + textHalfHeight)
+              belowY += item.paddingTop + textHalfHeight
               textY = belowY
-              belowY += (textHalfHeight + item.paddingBottom)
+              belowY += textHalfHeight + item.paddingBottom
             }
             textWidth = Math.max(textWidth, item.paddingLeft + calcTextWidth(text, item.size, item.weight, item.family) + item.paddingRight)
             textFigures.push({
@@ -123,7 +115,7 @@ export default class CandleLastPriceLabelView extends View<YAxis> {
             })
           }
         })
-        textFigures.forEach(figure => {
+        textFigures.forEach((figure) => {
           figure.attrs.width = textWidth
           this.createFigure(figure)?.draw(ctx)
         })

@@ -12,6 +12,8 @@ KLineChart 是采用 Apache-2.0 许可的开源项目，使用完全免费。
 
 对于赞助 KLineChart 的组织或个人，无论数额多少，如果需要将组织官网或者个人主页展示在 https://klinecharts.com 首页，请提供付款账号或地址，logo，主页链接等信息，发送邮件到 hu_li888@foxmail.com 。赞助额前三名，将使用超大logo展示。
 
+**需要顶级赞助商展示，可[联系作者](/guide/feedback)。**
+
 ## 赞助渠道
 ### 支付宝
 <img style="width:180px;margin-top:10px" src="/images/alipay_qr_code.png"/>

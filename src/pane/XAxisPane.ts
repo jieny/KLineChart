@@ -12,39 +12,31 @@
  * limitations under the License.
  */
 
-import { isValid } from '../common/utils/typeChecks'
+import type Chart from '../Chart'
 import type PickRequired from '../common/PickRequired'
-
+import { isValid } from '../common/utils/typeChecks'
+import type { XAxis, XAxisOverride } from '../component/XAxis'
+import { getXAxisClass } from '../extension/x-axis'
 import type DrawWidget from '../widget/DrawWidget'
 import XAxisWidget from '../widget/XAxisWidget'
-
-import type { XAxis, XAxisOverride } from '../component/XAxis'
-
 import DrawPane from './DrawPane'
 import type { PaneOptions } from './types'
-
-import { getXAxisClass } from '../extension/x-axis'
-
-import type Chart from '../Chart'
 
 export default class XAxisPane extends DrawPane<XAxis> {
   private _xAxis: XAxis
 
-  constructor (chart: Chart, options: PickRequired<PaneOptions, 'id'>) {
+  constructor(chart: Chart, options: PickRequired<PaneOptions, 'id'>) {
     super(chart, options)
     this.overrideXAxis({ name: 'normal', scrollZoomEnabled: true })
   }
 
-  override setOptions (options: PaneOptions): this {
+  override setOptions(options: PaneOptions): this {
     return super.setOptions(options)
   }
 
-  overrideXAxis (xAxis: XAxisOverride): this {
+  overrideXAxis(xAxis: XAxisOverride): this {
     const axisName = xAxis.name
-    if (
-      !isValid(this._xAxis) ||
-      (isValid(axisName) && this._xAxis.name !== axisName)
-    ) {
+    if (!isValid(this._xAxis) || (isValid(axisName) && this._xAxis.name !== axisName)) {
       this._xAxis = this.createXAxisComponent(axisName ?? 'normal')
     }
     this._xAxis.override(xAxis)
@@ -52,16 +44,16 @@ export default class XAxisPane extends DrawPane<XAxis> {
     return this
   }
 
-  getXAxisComponent (): XAxis {
+  getXAxisComponent(): XAxis {
     return this._xAxis
   }
 
-  private createXAxisComponent (name: string): XAxis {
+  private createXAxisComponent(name: string): XAxis {
     const XAxisClass = getXAxisClass(name)
     return new XAxisClass(this)
   }
 
-  override createMainWidget (container: HTMLElement): DrawWidget<DrawPane<XAxis>> {
+  override createMainWidget(container: HTMLElement): DrawWidget<DrawPane<XAxis>> {
     return new XAxisWidget(container, this)
   }
 }

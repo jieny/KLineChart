@@ -14,8 +14,8 @@
 
 import type Nullable from '../../common/Nullable'
 
-import OverlayImp, { type OverlayTemplate, type OverlayConstructor, type OverlayInnerConstructor } from '../../component/Overlay'
-
+import OverlayImp, { type OverlayConstructor, type OverlayInnerConstructor, type OverlayTemplate } from '../../component/Overlay'
+import brush from './brush'
 import fibonacciLine from './fibonacciLine'
 import horizontalRayLine from './horizontalRayLine'
 import horizontalSegment from './horizontalSegment'
@@ -25,13 +25,13 @@ import priceChannelLine from './priceChannelLine'
 import priceLine from './priceLine'
 import rayLine from './rayLine'
 import segment from './segment'
+import simpleAnnotation from './simpleAnnotation'
+import simpleTag from './simpleTag'
 import straightLine from './straightLine'
 import verticalRayLine from './verticalRayLine'
 import verticalSegment from './verticalSegment'
 import verticalStraightLine from './verticalStraightLine'
 
-import simpleAnnotation from './simpleAnnotation'
-import simpleTag from './simpleTag'
 import abcd from './abcd'
 import anyWaves from './anyWaves'
 import arrow from './arrow'
@@ -50,7 +50,6 @@ import threeWaves from './threeWaves'
 import triangle from './triangle'
 import xabcd from './xabcd'
 import ruler from './ruler'
-import brush from './brush'
 
 const overlays: Record<string, OverlayInnerConstructor> = {}
 
@@ -68,20 +67,21 @@ extensions.forEach((template: OverlayTemplate) => {
   overlays[template.name] = OverlayImp.extend(template)
 })
 
-function registerOverlay<E = unknown> (template: OverlayTemplate<E>): void {
+function registerOverlay<E = unknown>(template: OverlayTemplate<E>): void {
+  // @ts-ignore
   overlays[template.name] = OverlayImp.extend(template)
 }
 
-function getOverlayInnerClass (name: string): Nullable<OverlayInnerConstructor> {
+function getOverlayInnerClass(name: string): Nullable<OverlayInnerConstructor> {
   return overlays[name] ?? null
 }
 
-function getOverlayClass (name: string): Nullable<OverlayConstructor> {
+function getOverlayClass(name: string): Nullable<OverlayConstructor> {
   return overlays[name] ?? null
 }
 
-function getSupportedOverlays (): string[] {
+function getSupportedOverlays(): string[] {
   return Object.keys(overlays)
 }
 
-export { registerOverlay, getOverlayClass, getOverlayInnerClass, getSupportedOverlays }
+export { getOverlayClass, getOverlayInnerClass, getSupportedOverlays, registerOverlay }

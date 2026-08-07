@@ -1,40 +1,25 @@
-import { exec } from 'node:child_process'
+import { execFile } from 'node:child_process'
+import { createRequire } from 'node:module'
 import { promisify } from 'node:util'
 
 import { version } from './config.js'
 import { failure, start, success } from './logger.js'
 
-const execAsync = promisify(exec)
+const execFileAsync = promisify(execFile)
+const require = createRequire(import.meta.url)
+const dtsBundleGenerator = require.resolve('dts-bundle-generator/dist/bin/dts-bundle-generator.js')
 const startTime = Date.now()
 const output = 'dist/index.d.ts'
 
 start(`Building klinecharts@${version} declaration bundle...`)
 
 try {
-  // const { stdout, stderr } = await execFileAsync('dts-bundle-generator', [
-  //   '--no-banner',
-  //   'true',
-  //   '--fail-on-class',
-  //   'true',
-  //   '--umd-module-name',
-  //   'klinecharts',
-  //   '-o',
-  //   output,
-  //   'src/index.ts'
-  // ])
-  const { stdout, stderr } = await execAsync(
-    `pnpm exec dts-bundle-generator \
-  --no-banner true \
-  --fail-on-class true \
-  --umd-module-name klinecharts \
-  -o "${output}" \
-  src/index.ts`
-  )
+  const { stdout, stderr } = await execFileAsync(process.execPath, [dtsBundleGenerator, '--no-banner', 'true', '--fail-on-class', 'true', '--umd-module-name', 'klinecharts', '-o', output, 'src/index.ts'])
 
   const outputLines = stdout
     .split('\n')
-    .map(line => line.trim())
-    .filter(line => line && !line.startsWith('Done in '))
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith('Done in '))
 
   if (outputLines.length > 0) {
     console.log(outputLines.join('\n'))
