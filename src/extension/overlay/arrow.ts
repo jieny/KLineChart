@@ -36,7 +36,7 @@ const arrow: OverlayTemplate = {
         if (coordinates[1].y > coordinates[0].y) {
           offsetAngle = Math.PI / 2
         } else {
-          offsetAngle = Math.PI / 2 * 3
+          offsetAngle = (Math.PI / 2) * 3
         }
       }
 

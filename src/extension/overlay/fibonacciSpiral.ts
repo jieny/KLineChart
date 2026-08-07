@@ -39,30 +39,25 @@ const fibonacciSpiral: OverlayTemplate = {
         if (coordinates[1].y > coordinates[0].y) {
           offsetAngle = Math.PI / 2
         } else {
-          offsetAngle = Math.PI / 2 * 3
+          offsetAngle = (Math.PI / 2) * 3
         }
       }
-      const rotateCoordinate1 = getRotateCoordinate(
-        { x: coordinates[0].x - startRadius, y: coordinates[0].y },
-        coordinates[0],
-        offsetAngle
-      )
-      const rotateCoordinate2 = getRotateCoordinate(
-        { x: coordinates[0].x - startRadius, y: coordinates[0].y - startRadius },
-        coordinates[0],
-        offsetAngle
-      )
-      const arcs = [{
-        ...rotateCoordinate1,
-        r: startRadius,
-        startAngle: offsetAngle,
-        endAngle: offsetAngle + Math.PI / 2
-      }, {
-        ...rotateCoordinate2,
-        r: startRadius * 2,
-        startAngle: offsetAngle + Math.PI / 2,
-        endAngle: offsetAngle + Math.PI
-      }]
+      const rotateCoordinate1 = getRotateCoordinate({ x: coordinates[0].x - startRadius, y: coordinates[0].y }, coordinates[0], offsetAngle)
+      const rotateCoordinate2 = getRotateCoordinate({ x: coordinates[0].x - startRadius, y: coordinates[0].y - startRadius }, coordinates[0], offsetAngle)
+      const arcs = [
+        {
+          ...rotateCoordinate1,
+          r: startRadius,
+          startAngle: offsetAngle,
+          endAngle: offsetAngle + Math.PI / 2
+        },
+        {
+          ...rotateCoordinate2,
+          r: startRadius * 2,
+          startAngle: offsetAngle + Math.PI / 2,
+          endAngle: offsetAngle + Math.PI
+        }
+      ]
       let x = coordinates[0].x - startRadius
       let y = coordinates[0].y - startRadius
       for (let i = 2; i < 9; i++) {
@@ -71,7 +66,7 @@ const fibonacciSpiral: OverlayTemplate = {
         switch (i % 4) {
           case 0: {
             startAngle = offsetAngle
-            x -= (arcs[i - 2].r)
+            x -= arcs[i - 2].r
             break
           }
           case 1: {
@@ -81,11 +76,11 @@ const fibonacciSpiral: OverlayTemplate = {
           }
           case 2: {
             startAngle = offsetAngle + Math.PI
-            x += (arcs[i - 2].r)
+            x += arcs[i - 2].r
             break
           }
           case 3: {
-            startAngle = offsetAngle + Math.PI / 2 * 3
+            startAngle = offsetAngle + (Math.PI / 2) * 3
             y += arcs[i - 2].r
             break
           }

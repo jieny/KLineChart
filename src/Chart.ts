@@ -951,7 +951,7 @@ export default class ChartImp implements Chart {
     return this._chartStore.overrideOverlay(override)
   }
 
-  selectOverlay (override: OverlayOverride): boolean {
+  selectOverlay(override: OverlayOverride): boolean {
     return this._chartStore.overrideOverlay(override)
   }
 

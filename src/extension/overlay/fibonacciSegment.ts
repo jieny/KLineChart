@@ -33,13 +33,18 @@ const fibonacciSegment: OverlayTemplate = {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- ignore
       // @ts-expect-error
       const valueDif = points[0].value - points[1].value
-      percents.forEach(percent => {
+      percents.forEach((percent) => {
         const y = coordinates[1].y + yDif * percent
         const precision = chart.getSymbol()?.pricePrecision ?? 2
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- ignore
         // @ts-expect-error
         const price = (points[1].value + valueDif * percent).toFixed(precision)
-        lines.push({ coordinates: [{ x: coordinates[0].x, y }, { x: coordinates[1].x, y }] })
+        lines.push({
+          coordinates: [
+            { x: coordinates[0].x, y },
+            { x: coordinates[1].x, y }
+          ]
+        })
         texts.push({
           x: textX,
           y,
@@ -52,7 +57,8 @@ const fibonacciSegment: OverlayTemplate = {
       {
         type: 'line',
         attrs: lines
-      }, {
+      },
+      {
         type: 'text',
         ignoreEvent: true,
         attrs: texts

@@ -16,13 +16,13 @@ import type Bounding from '../../common/Bounding'
 import { getLinearSlopeIntercept, getLinearYFromCoordinates } from '../figure/line'
 import type { LineAttrs } from '../figure/line'
 
-export function getRotateCoordinate (coordinate: Coordinate, targetCoordinate: Coordinate, angle: number): Coordinate {
+export function getRotateCoordinate(coordinate: Coordinate, targetCoordinate: Coordinate, angle: number): Coordinate {
   const x = (coordinate.x - targetCoordinate.x) * Math.cos(angle) - (coordinate.y - targetCoordinate.y) * Math.sin(angle) + targetCoordinate.x
   const y = (coordinate.x - targetCoordinate.x) * Math.sin(angle) + (coordinate.y - targetCoordinate.y) * Math.cos(angle) + targetCoordinate.y
   return { x, y }
 }
 
-export function getRayLine (coordinates: Coordinate[], bounding: Bounding): LineAttrs | LineAttrs[] {
+export function getRayLine(coordinates: Coordinate[], bounding: Bounding): LineAttrs | LineAttrs[] {
   if (coordinates.length > 1) {
     // eslint-disable-next-line @typescript-eslint/init-declarations -- ignore
     let coordinate: Coordinate
@@ -54,14 +54,14 @@ export function getRayLine (coordinates: Coordinate[], bounding: Bounding): Line
   return []
 }
 
-export function getDistance (coordinate1: Coordinate, coordinate2: Coordinate): number {
+export function getDistance(coordinate1: Coordinate, coordinate2: Coordinate): number {
   const xDis = Math.abs(coordinate1.x - coordinate2.x)
   const yDis = Math.abs(coordinate1.y - coordinate2.y)
   return Math.sqrt(xDis * xDis + yDis * yDis)
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- ignore
-export function getArrowLine (point1: Coordinate, point2: Coordinate) {
+export function getArrowLine(point1: Coordinate, point2: Coordinate) {
   const flag = point2.x > point1.x ? 0 : 1
   const kb = getLinearSlopeIntercept(point1, point2)
   // eslint-disable-next-line @typescript-eslint/init-declarations -- ignore
@@ -73,7 +73,7 @@ export function getArrowLine (point1: Coordinate, point2: Coordinate) {
     if (point2.y > point1.y) {
       offsetAngle = Math.PI / 2
     } else {
-      offsetAngle = Math.PI / 2 * 3
+      offsetAngle = (Math.PI / 2) * 3
     }
   }
   // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- ignore

@@ -16,7 +16,7 @@ import type { OverlayTemplate } from '../../component/Overlay'
 import { getArrowLine } from './utils'
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- ignore
-function getIntervalText (interval: number) {
+function getIntervalText(interval: number) {
   const minSecs = 60
   const hourSecs = 3600
   const daySecs = 24 * 3600
@@ -104,7 +104,7 @@ const ruler: OverlayTemplate = {
 
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- ignore
       // @ts-expect-error
-      const distSec = ((points[1].timestamp - points[0].timestamp) / 1000)
+      const distSec = (points[1].timestamp - points[0].timestamp) / 1000
       const text = `${priceChg} (${pctChg}%)\n${barNum} bars ${getIntervalText(distSec)}` // bars → ${m.num_bar()}
       let textY = pt2.y + 10
       let boxBaseLine = 'top'
@@ -116,10 +116,7 @@ const ruler: OverlayTemplate = {
         {
           type: 'polygon',
           attrs: {
-            coordinates: [
-              pt1, { x: pt2.x, y: pt1.y },
-              pt2, { x: pt1.x, y: pt2.y }
-            ]
+            coordinates: [pt1, { x: pt2.x, y: pt1.y }, pt2, { x: pt1.x, y: pt2.y }]
           },
           styles: { style: 'stroke_fill' }
         },

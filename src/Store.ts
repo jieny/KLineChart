@@ -107,7 +107,7 @@ export interface Store {
   setBarSpace: (space: number) => void
   getBarSpace: () => BarSpace
   getVisibleRange: () => VisibleRange
-  test:() => void
+  test: () => void
   setDataLoader: (dataLoader: DataLoader) => void
   overrideIndicator: (override: IndicatorOverride) => boolean
   removeIndicator: (filter?: IndicatorFilter) => boolean
@@ -920,7 +920,7 @@ export default class StoreImp implements Store {
     return this._visibleRange
   }
 
-  test (): void {
+  test(): void {
     console.log(this._dataListForIndicator)
   }
 
@@ -1672,7 +1672,7 @@ export default class StoreImp implements Store {
     return false
   }
 
-  selectOverlay (override: OverlayOverride): boolean {
+  selectOverlay(override: OverlayOverride): boolean {
     const filterOverlays = this.getOverlaysByFilter(override)
 
     if (filterOverlays.length === 0) {
@@ -1681,12 +1681,7 @@ export default class StoreImp implements Store {
 
     const targetOverlay = filterOverlays[0]
 
-    const {
-      paneId: prevPaneId,
-      overlay: prevOverlay,
-      figure: prevFigure
-    } = this._clickOverlayInfo
-
+    const { paneId: prevPaneId, overlay: prevOverlay, figure: prevFigure } = this._clickOverlayInfo
     // 已经选中这个 overlay，就不重复触发 onSelected
     if (prevOverlay?.id === targetOverlay.id) {
       return true

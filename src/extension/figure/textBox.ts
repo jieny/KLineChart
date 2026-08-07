@@ -99,19 +99,12 @@ drawRect
 //   }
 // }
 
-export function drawRectText (ctx: CanvasRenderingContext2D, attrs: TextAttrs, styles: Partial<TextStyle>): void {
+export function drawRectText(ctx: CanvasRenderingContext2D, attrs: TextAttrs, styles: Partial<TextStyle>): void {
   const { text } = attrs
-  const {
-    size = 12,
-    family,
-    weight,
-    paddingLeft = 0,
-    paddingTop = 0,
-    paddingRight = 0
-  } = styles
+  const { size = 12, family, weight, paddingLeft = 0, paddingTop = 0, paddingRight = 0 } = styles
   const lines = text.split('\n')
 
-  const lineWidths = lines.map(lineText => calcTextWidth(lineText, size, weight, family))
+  const lineWidths = lines.map((lineText) => calcTextWidth(lineText, size, weight, family))
   const heightRatio = 1.5
   const lineHeight = size * heightRatio
   const maxWidth = Math.max(...lineWidths)
@@ -134,24 +127,15 @@ export function drawRectText (ctx: CanvasRenderingContext2D, attrs: TextAttrs, s
   })
 }
 
-function checkCoordinateOnText (coordinate: Coordinate, attrs: TextAttrs, styles: Partial<TextStyle>): boolean {
-  const {
-    size = 12,
-    family,
-    weight
-  } = styles
+function checkCoordinateOnText(coordinate: Coordinate, attrs: TextAttrs, styles: Partial<TextStyle>): boolean {
+  const { size = 12, family, weight } = styles
   const lines = attrs.text.split('\n')
-  const lineWidths = lines.map(lineText => calcTextWidth(lineText, size, weight, family))
+  const lineWidths = lines.map((lineText) => calcTextWidth(lineText, size, weight, family))
   const heightRatio = 1.5
   const maxWidth = Math.max(...lineWidths)
 
   const { x, y, width, height } = getTextRect(attrs, styles, maxWidth, lines.length, heightRatio)
-  return (
-    coordinate.x >= x &&
-    coordinate.x <= x + width &&
-    coordinate.y >= y &&
-    coordinate.y <= y + height
-  )
+  return coordinate.x >= x && coordinate.x <= x + width && coordinate.y >= y && coordinate.y <= y + height
 }
 
 const textBox: FigureTemplate<TextAttrs, Partial<TextStyle>> = {

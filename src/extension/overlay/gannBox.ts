@@ -32,18 +32,43 @@ const gannBox: OverlayTemplate = {
       const dashedLines = [
         { coordinates: [coordinates[0], { x: coordinates[1].x, y: coordinates[1].y - quarterYDis }] },
         { coordinates: [coordinates[0], { x: coordinates[1].x, y: coordinates[1].y - quarterYDis * 2 }] },
-        { coordinates: [{ x: coordinates[0].x, y: coordinates[1].y }, { x: coordinates[1].x, y: coordinates[0].y + quarterYDis }] },
-        { coordinates: [{ x: coordinates[0].x, y: coordinates[1].y }, { x: coordinates[1].x, y: coordinates[0].y + quarterYDis * 2 }] },
+        {
+          coordinates: [
+            { x: coordinates[0].x, y: coordinates[1].y },
+            { x: coordinates[1].x, y: coordinates[0].y + quarterYDis }
+          ]
+        },
+        {
+          coordinates: [
+            { x: coordinates[0].x, y: coordinates[1].y },
+            { x: coordinates[1].x, y: coordinates[0].y + quarterYDis * 2 }
+          ]
+        },
 
         { coordinates: [{ ...coordinates[0] }, { x: coordinates[0].x + xDis * 0.236, y: coordinates[1].y }] },
         { coordinates: [{ ...coordinates[0] }, { x: coordinates[0].x + xDis * 0.5, y: coordinates[1].y }] },
 
-        { coordinates: [{ x: coordinates[0].x, y: coordinates[1].y }, { x: coordinates[0].x + xDis * 0.236, y: coordinates[0].y }] },
-        { coordinates: [{ x: coordinates[0].x, y: coordinates[1].y }, { x: coordinates[0].x + xDis * 0.5, y: coordinates[0].y }] }
+        {
+          coordinates: [
+            { x: coordinates[0].x, y: coordinates[1].y },
+            { x: coordinates[0].x + xDis * 0.236, y: coordinates[0].y }
+          ]
+        },
+        {
+          coordinates: [
+            { x: coordinates[0].x, y: coordinates[1].y },
+            { x: coordinates[0].x + xDis * 0.5, y: coordinates[0].y }
+          ]
+        }
       ]
       const solidLines = [
         { coordinates: [coordinates[0], coordinates[1]] },
-        { coordinates: [{ x: coordinates[0].x, y: coordinates[1].y }, { x: coordinates[1].x, y: coordinates[0].y }] }
+        {
+          coordinates: [
+            { x: coordinates[0].x, y: coordinates[1].y },
+            { x: coordinates[1].x, y: coordinates[0].y }
+          ]
+        }
       ]
       return [
         {
@@ -59,12 +84,7 @@ const gannBox: OverlayTemplate = {
           type: 'polygon',
           ignoreEvent: true,
           attrs: {
-            coordinates: [
-              coordinates[0],
-              { x: coordinates[1].x, y: coordinates[0].y },
-              coordinates[1],
-              { x: coordinates[0].x, y: coordinates[1].y }
-            ]
+            coordinates: [coordinates[0], { x: coordinates[1].x, y: coordinates[0].y }, coordinates[1], { x: coordinates[0].x, y: coordinates[1].y }]
           },
           styles: { style: 'fill' }
         },

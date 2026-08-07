@@ -3,7 +3,7 @@ import type { TextStyle } from '../../common/Styles'
 import type { RectAttrs } from './rect'
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- ignore
-export function getRectStartX (attrs: TextAttrs, styles: Partial<TextStyle>, textWidth?: number) {
+export function getRectStartX(attrs: TextAttrs, styles: Partial<TextStyle>, textWidth?: number) {
   const { size = 12, paddingLeft = 0, paddingTop = 0, paddingRight = 0, paddingBottom = 0 } = styles
   const { x, y, text, align = 'left', baseline = 'top' } = attrs
   textWidth ??= size * text.length
@@ -29,8 +29,7 @@ export function getRectStartX (attrs: TextAttrs, styles: Partial<TextStyle>, tex
   return startX
 }
 
-export function getTextRect (attrs: TextAttrs, styles: Partial<TextStyle>, textWidth?: number,
-  lineNum?: number, lineHeight?: number): RectAttrs {
+export function getTextRect(attrs: TextAttrs, styles: Partial<TextStyle>, textWidth?: number, lineNum?: number, lineHeight?: number): RectAttrs {
   const { size = 12, paddingLeft = 0, paddingTop = 0, paddingRight = 0, paddingBottom = 0 } = styles
   const { y, text, baseline = 'top' } = attrs
   const length = text.length
