@@ -41,6 +41,7 @@ import type IndicatorImp from './component/Indicator'
 import type { IndicatorCreate, IndicatorFilter, IndicatorOverride } from './component/Indicator'
 import type OverlayImp from './component/Overlay'
 import { OVERLAY_ID_PREFIX, type OverlayCreate, type OverlayFigure, type OverlayFilter, type OverlayOverride } from './component/Overlay'
+import { getSupportedLocales } from './extension/i18n/index'
 import { getIndicatorClass } from './extension/indicator/index'
 import { getOverlayInnerClass } from './extension/overlay/index'
 import { getStyles as getExtensionStyles } from './extension/styles/index'
@@ -321,6 +322,13 @@ export default class StoreImp implements Store {
   private readonly _taskScheduler: TaskScheduler
 
   /**
+   * Indicators waiting for a coalesced recalculation flush
+   */
+  private readonly _pendingCalcIndicators = new Map<string, IndicatorImp>()
+
+  private _calcFlushScheduled = false
+
+  /**
    * Overlay
    */
   private readonly _overlays = new Map<string, OverlayImp[]>()
@@ -485,6 +493,11 @@ export default class StoreImp implements Store {
   }
 
   setLocale(locale: string): void {
+    if (!getSupportedLocales().includes(locale)) {
+      logWarn('', '', `Locale ${locale} is not supported, fallback to en-US.`)
+      this._locale = 'en-US'
+      return
+    }
     this._locale = locale
   }
 
@@ -669,8 +682,7 @@ export default class StoreImp implements Store {
         this._chart.layout({
           measureWidth: true,
           update: true,
-          buildYAxisTick: true,
-          cacheYAxisWidth: type !== 'init'
+          buildYAxisTick: true
         })
       }
     }
@@ -760,14 +772,10 @@ export default class StoreImp implements Store {
       }
     }
     // More processing and loading, more loading if there are callback methods and no data is being loaded
-    if (from === 0) {
-      if (this._dataLoadMore.forward) {
-        this._processDataLoad('forward')
-      }
-    } else if (to === totalBarCount) {
-      if (this._dataLoadMore.backward) {
-        this._processDataLoad('backward')
-      }
+    if (from === 0 && this._dataLoadMore.forward) {
+      this._processDataLoad('forward')
+    } else if (to === totalBarCount && this._dataLoadMore.backward) {
+      this._processDataLoad('backward')
     }
   }
 
@@ -847,8 +855,7 @@ export default class StoreImp implements Store {
     this._chart.layout({
       measureWidth: true,
       update: true,
-      buildYAxisTick: true,
-      cacheYAxisWidth: true
+      buildYAxisTick: true
     })
   }
 
@@ -873,8 +880,7 @@ export default class StoreImp implements Store {
       this._chart.layout({
         measureWidth: true,
         update: true,
-        buildYAxisTick: true,
-        cacheYAxisWidth: true
+        buildYAxisTick: true
       })
     }
     return this
@@ -940,8 +946,7 @@ export default class StoreImp implements Store {
     this._chart.layout({
       measureWidth: true,
       update: true,
-      buildYAxisTick: true,
-      cacheYAxisWidth: true
+      buildYAxisTick: true
     })
     const realDistance = Math.round(prevLastBarRightSideDistance - this._lastBarRightSideDiffBarCount * this._barSpace)
     if (realDistance !== 0) {
@@ -1360,11 +1365,31 @@ export default class StoreImp implements Store {
     let indicators: IndicatorImp[] = []
     indicators = indicators.concat(data)
     if (indicators.length > 0) {
-      const tasks: Record<string, Promise<unknown>> = {}
       indicators.forEach((indicator) => {
-        tasks[indicator.id] = indicator.calcImp(this._dataList, this._dataListForIndicator)
+        this._pendingCalcIndicators.set(indicator.id, indicator)
       })
-      this._taskScheduler.add(tasks)
+      if (!this._calcFlushScheduled) {
+        this._calcFlushScheduled = true
+        // `calc` runs synchronously inside `calcImp`, so a burst of synchronous
+        // data updates (e.g. a websocket catch-up) would recalculate every
+        // indicator over the whole history once per update, in one blocking
+        // task. Defer the recalculation to a microtask: `calc` is a pure
+        // function of the current data list, so one flush after the last
+        // update of the tick produces the same result as recalculating after
+        // each of them.
+        void Promise.resolve().then(() => {
+          this._calcFlushScheduled = false
+          if (this._pendingCalcIndicators.size === 0) {
+            return
+          }
+          const tasks: Record<string, Promise<unknown>> = {}
+          this._pendingCalcIndicators.forEach((indicator) => {
+            tasks[indicator.id] = indicator.calcImp(this._dataList, this._dataListForIndicator)
+          })
+          this._pendingCalcIndicators.clear()
+          this._taskScheduler.add(tasks)
+        })
+      }
     }
   }
 
@@ -1774,17 +1799,21 @@ export default class StoreImp implements Store {
         let ignoreUpdateFlag = false
         let sortFlag = false
         if (overlay !== null) {
-          overlay.override({ zLevel: overlay.getPrevZLevel() })
-          sortFlag = true
+          if (!overlay.fixedZLevel) {
+            overlay.override({ zLevel: overlay.getPrevZLevel() })
+            sortFlag = true
+          }
           if (processOnMouseLeaveEvent(overlay, figure)) {
             ignoreUpdateFlag = true
           }
         }
 
         if (infoOverlay !== null) {
-          infoOverlay.setPrevZLevel(infoOverlay.zLevel)
-          infoOverlay.override({ zLevel: Number.MAX_SAFE_INTEGER })
-          sortFlag = true
+          if (!infoOverlay.fixedZLevel) {
+            infoOverlay.setPrevZLevel(infoOverlay.zLevel)
+            infoOverlay.override({ zLevel: Number.MAX_SAFE_INTEGER })
+            sortFlag = true
+          }
           if (processOnMouseEnterEvent(infoOverlay, info.figure)) {
             ignoreUpdateFlag = true
           }
@@ -1862,8 +1891,11 @@ export default class StoreImp implements Store {
   }
 
   destroy(): void {
+    this._processDataUnsubscribe()
     this._clearData()
     this._clearLastPriceMarkExtendTextUpdateTimer()
+    this._calcFlushScheduled = false
+    this._pendingCalcIndicators.clear()
     this._taskScheduler.clear()
     this._overlays.clear()
     this._indicators.clear()

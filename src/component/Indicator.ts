@@ -23,7 +23,7 @@ import type ExcludePickPartial from '../common/ExcludePickPartial'
 import type Nullable from '../common/Nullable'
 import type { IndicatorPolygonStyle, IndicatorStyle, RectStyle, SmoothLineStyle, TextStyle, TooltipFeatureStyle, TooltipLegend } from '../common/Styles'
 import { formatValue } from '../common/utils/format'
-import { clone, isBoolean, isFunction, isNumber, isString, isValid, merge } from '../common/utils/typeChecks'
+import { clone, isBoolean, isFunction, isNumber, isString, isValid, merge, pickDefined } from '../common/utils/typeChecks'
 import type { ArcAttrs } from '../extension/figure/arc'
 import type { LineAttrs } from '../extension/figure/line'
 import type { RectAttrs } from '../extension/figure/rect'
@@ -246,8 +246,13 @@ export type IndicatorConstructor<D = unknown, C = unknown, E = unknown> = new ()
 
 export type EachFigureCallback<D> = (figure: IndicatorFigure<D>, figureStyles: IndicatorFigureStyle, index: number) => void
 
-export function eachFigures<D = unknown>(indicator: Indicator<D>, dataIndex: number, barSpace: BarSpace, defaultStyles: IndicatorStyle, eachFigureCallback: EachFigureCallback<D>): void {
-  const result = indicator.result
+export interface PreparedIndicatorFigure<D = unknown> {
+  figure: IndicatorFigure<D>
+  defaultStyles: IndicatorFigureStyle
+  index: number
+}
+
+export function prepareIndicatorFigures<D = unknown>(indicator: Indicator<D>, defaultStyles: IndicatorStyle): Array<PreparedIndicatorFigure<D>> {
   const figures = indicator.figures
   const styles = indicator.styles
 
@@ -268,6 +273,7 @@ export function eachFigures<D = unknown>(indicator: Indicator<D>, dataIndex: num
   let barCount = 0
   let lineCount = 0
 
+  const preparedFigures: Array<PreparedIndicatorFigure<D>> = []
   let defaultFigureStyles: SmoothLineStyle | TextStyle | IndicatorFigureStyle
   let figureIndex = 0
   figures.forEach((figure) => {
@@ -303,18 +309,27 @@ export function eachFigures<D = unknown>(indicator: Indicator<D>, dataIndex: num
       }
     }
     if (isValid(figure.type)) {
-      const ss = figure.styles?.({
-        data: {
-          prev: result[dataIndex - 1],
-          current: result[dataIndex],
-          next: result[dataIndex + 1]
-        },
-        indicator,
-        barSpace,
-        defaultStyles
-      })
-      eachFigureCallback(figure, { ...defaultFigureStyles, ...ss }, figureIndex)
+      preparedFigures.push({ figure, defaultStyles: { ...defaultFigureStyles } as IndicatorFigureStyle, index: figureIndex })
     }
+  })
+  return preparedFigures
+}
+
+export function eachFigures<D = unknown>(indicator: Indicator<D>, dataIndex: number, barSpace: BarSpace, defaultStyles: IndicatorStyle, eachFigureCallback: EachFigureCallback<D>, preparedFigures = prepareIndicatorFigures(indicator, defaultStyles)): void {
+  const result = indicator.result
+  preparedFigures.forEach(({ figure, defaultStyles: defaultFigureStyles, index }) => {
+    const dynamicStyles = figure.styles?.({
+      data: {
+        prev: result[dataIndex - 1],
+        current: result[dataIndex],
+        next: result[dataIndex + 1]
+      },
+      indicator,
+      barSpace,
+      defaultStyles
+    })
+    const figureStyles = isValid(dynamicStyles) ? { ...defaultFigureStyles, ...dynamicStyles } : defaultFigureStyles
+    eachFigureCallback(figure, figureStyles, index)
   })
 }
 
@@ -337,7 +352,7 @@ export default class IndicatorImp<D = unknown, C = unknown, E = unknown> impleme
   maxValue: Nullable<number> = null
   styles: Nullable<Partial<IndicatorStyle>> = null
   shouldUpdate: IndicatorShouldUpdateCallback<D, C, E> = (prev, current) => {
-    const calc = JSON.stringify(prev.calcParams) !== JSON.stringify(current.calcParams) || prev.figures !== current.figures || prev.calc !== current.calc
+    const calc = JSON.stringify(prev.calcParams) !== JSON.stringify(current.calcParams) || JSON.stringify(prev.figures) !== JSON.stringify(current.figures) || prev.calc !== current.calc
     const draw =
       calc ||
       prev.shortName !== current.shortName ||
@@ -392,16 +407,20 @@ export default class IndicatorImp<D = unknown, C = unknown, E = unknown> impleme
 
     if (isValid(styles)) {
       this.styles ??= {}
-      merge(this.styles, styles)
+      // pickDefined strips explicit `undefined` values so they mean
+      // "not provided" instead of resetting the current value (merge copies them otherwise).
+      merge(this.styles, pickDefined(styles))
     }
-    merge(this, others)
+    merge(this, pickDefined(others))
     if (isValid(calcParams)) {
-      this.calcParams = calcParams
+      this.calcParams = clone(calcParams)
       if (isFunction(this.regenerateFigures)) {
         this.figures = this.regenerateFigures(this.calcParams)
       }
     }
-    this.figures = figures ?? this.figures
+    if (isValid(figures)) {
+      this.figures = clone(figures)
+    }
   }
 
   setSeriesPrecision(precision: number): void {

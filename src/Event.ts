@@ -419,7 +419,7 @@ export default class Event implements EventHandler {
   }
 
   mouseUpEvent(e: MouseTouchEvent): boolean {
-    const { widget } = this._findWidgetByEvent(e)
+    const widget = this._mouseDownWidget ?? this._findWidgetByEvent(e).widget
     let consumed = false
     if (widget !== null) {
       const event = this._makeWidgetEvent(e, widget)
@@ -501,7 +501,12 @@ export default class Event implements EventHandler {
     return false
   }
 
-  mouseLeaveEvent(): boolean {
+  mouseLeaveEvent(e: MouseTouchEvent): boolean {
+    const widget = this._mouseMoveTriggerWidgetInfo.widget
+    if (widget !== null) {
+      widget.dispatchEvent('mouseLeaveEvent', this._makeWidgetEvent(e, widget))
+      this._mouseMoveTriggerWidgetInfo = { pane: null, widget: null }
+    }
     this._chart.getChartStore().setCrosshair()
     return true
   }
@@ -647,6 +652,26 @@ export default class Event implements EventHandler {
       this._yAxisStartScaleDistance = 0
     }
     return false
+  }
+
+  touchCancelEvent(e: MouseTouchEvent): boolean {
+    const { widget } = this._findWidgetByEvent(e)
+    if (widget !== null) {
+      const event = this._makeWidgetEvent(e, widget)
+      // notify the widget the gesture is over, same as a touch end
+      widget.dispatchEvent('mouseUpEvent', event)
+    }
+    this._startScrollCoordinate = null
+    this._prevYAxisRanges.clear()
+    this._xAxisStartScaleCoordinate = null
+    this._xAxisStartScaleDistance = 0
+    this._xAxisScale = 1
+    this._yAxisStartScaleDistance = 0
+    this._touchCoordinate = null
+    this._touchCancelCrosshair = false
+    this._touchZoomed = false
+    this._chart.getChartStore().setCrosshair()
+    return true
   }
 
   tapEvent(e: MouseTouchEvent): boolean {
