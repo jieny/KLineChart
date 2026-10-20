@@ -22,6 +22,7 @@ import type Crosshair from './common/Crosshair'
 import type { KLineData } from './common/Data'
 import type { DataLoader } from './common/DataLoader'
 import type DeepPartial from './common/DeepPartial'
+import type DeepRequired from './common/DeepRequired'
 import type ExcludePickPartial from './common/ExcludePickPartial'
 import type Nullable from './common/Nullable'
 import type { Period } from './common/Period'
@@ -45,7 +46,7 @@ import type { XAxisOverride } from './component/XAxis'
 import { Y_AXIS_ID_PREFIX, type YAxis, type YAxisOverride } from './component/YAxis'
 import Event from './Event'
 import { getIndicatorClass } from './extension/indicator/index'
-import type { DecimalFold, Formatter, Hotkey, Options, ThousandsSeparator, ZoomAnchor, ZoomAnchorType } from './Options'
+import type { DecimalFold, Formatter, Hotkey, Layout, Options, ThousandsSeparator, ZoomAnchor, ZoomAnchorType } from './Options'
 import CandlePane from './pane/CandlePane'
 import type DrawPane from './pane/DrawPane'
 import IndicatorPane from './pane/IndicatorPane'
@@ -612,6 +613,14 @@ export default class ChartImp implements Chart {
     return this._chartStore.getStyles()
   }
 
+  setLayoutOptions(layout: DeepPartial<Layout>): void {
+    this._chartStore.setLayoutOptions(layout)
+  }
+
+  getLayoutOptions(): DeepRequired<Layout> {
+    return this._chartStore.getLayoutOptions()
+  }
+
   setFormatter(formatter: Partial<Formatter>): void {
     this._setOptions(() => {
       this._chartStore.setFormatter(formatter)
@@ -1135,6 +1144,7 @@ export default class ChartImp implements Chart {
   }
 
   scrollByDistance(distance: number, animationDuration?: number): void {
+    this._chartEvent.stopFlingScroll()
     const duration = isNumber(animationDuration) && animationDuration > 0 ? animationDuration : 0
     this._chartStore.startScroll()
     if (duration > 0) {

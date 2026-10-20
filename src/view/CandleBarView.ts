@@ -16,8 +16,8 @@ import type BarSpace from '../common/BarSpace'
 import type { VisibleRangeData } from '../common/Data'
 import type { EventHandler } from '../common/EventHandler'
 import type Nullable from '../common/Nullable'
-import type { CandleBarColor, CandleType, RectStyle } from '../common/Styles'
-import { isValid } from '../common/utils/typeChecks'
+import type { CandleBarColor, CandleBarColorCallback, CandleType, RectStyle } from '../common/Styles'
+import { isFunction, isValid } from '../common/utils/typeChecks'
 
 import type { FigureCreate } from '../component/Figure'
 import type { RectAttrs } from '../extension/figure/rect'
@@ -27,7 +27,7 @@ import ChildrenView from './ChildrenView'
 export interface CandleBarOptions {
   yAxisId: string
   type: Exclude<CandleType, 'area'>
-  styles: CandleBarColor
+  styles: CandleBarColor | CandleBarColorCallback
 }
 
 export default class CandleBarView extends ChildrenView {
@@ -64,7 +64,6 @@ export default class CandleBarView extends ChildrenView {
           const color = current.color
           // console.log(current) // current就是 KLineData里的数据
 
-          const comparePrice = styles.compareRule === 'current_open' ? open : (prev?.close ?? close)
           const colors: string[] = []
 
           if (color != null) {
@@ -72,7 +71,13 @@ export default class CandleBarView extends ChildrenView {
             colors[0] = color // 填充色
             colors[1] = color // 边框色
             colors[2] = color // 烛芯线色
+          } else if (isFunction<CandleBarColorCallback>(styles)) {
+            const result = styles(visibleData.data)
+            colors[0] = result.color
+            colors[1] = result.borderColor
+            colors[2] = result.wickColor
           } else {
+            const comparePrice = styles.compareRule === 'current_open' ? open : (prev?.close ?? close)
             if (close > comparePrice) {
               colors[0] = styles.upColor
               colors[1] = styles.upBorderColor
