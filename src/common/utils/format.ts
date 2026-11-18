@@ -106,7 +106,8 @@ export function formatTimestampByTemplate(dateTimeFormat: Intl.DateTimeFormat, t
 
 export function formatPrecision(value: string | number, precision?: number): string {
   const v = +value
-  if (isNumber(v)) {
+  // `+''` coerces to 0, which would print a misleading "0.00"; keep the input as is.
+  if (value !== '' && isNumber(v)) {
     return v.toFixed(precision ?? 2)
   }
   return `${value}`
@@ -117,6 +118,9 @@ export function formatBigNumber(value: string | number): string {
   if (isNumber(v)) {
     const sign = v < 0 ? '-' : ''
     const a = Math.abs(v)
+    if (a >= 1000000000000) {
+      return `${sign}${+(a / 1000000000000).toFixed(3)}T`
+    }
     if (a >= 1000000000) {
       return `${sign}${+(a / 1000000000).toFixed(3)}B`
     }
