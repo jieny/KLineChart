@@ -64,7 +64,7 @@ export default class CrosshairHorizontalLabelView<C extends Axis = YAxis> extend
 
   protected getText(crosshair: Crosshair, chartStore: ChartStore, axis: Axis): string {
     const yAxis = axis as unknown as YAxis
-    const value = axis.convertFromPixel(crosshair.y!)
+    const value = crosshair.price ?? axis.convertFromPixel(crosshair.y!)
     let precision = 0
     let shouldFormatBigNumber = false
     if (yAxis.isInCandle()) {

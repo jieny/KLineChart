@@ -1318,9 +1318,9 @@ export default class StoreImp implements Store {
     }
     const kLineData: Nullable<KLineData> = this._dataList[dataIndex]
     const realX = this.dataIndexToCoordinate(realDataIndex)
-    const prevCrosshair = { x: this._crosshair.x, y: this._crosshair.y, paneId: this._crosshair.paneId }
+    const prevCrosshair = { x: this._crosshair.x, y: this._crosshair.y, paneId: this._crosshair.paneId, price: this._crosshair.price }
     this._crosshair = { ...cr, realX, kLineData, realDataIndex, dataIndex, timestamp: this.dataIndexToTimestamp(realDataIndex) ?? undefined }
-    if (prevCrosshair.x !== cr.x || prevCrosshair.y !== cr.y || prevCrosshair.paneId !== cr.paneId || (forceInvalidate ?? false)) {
+    if (prevCrosshair.x !== cr.x || prevCrosshair.y !== cr.y || prevCrosshair.paneId !== cr.paneId || prevCrosshair.price !== cr.price || (forceInvalidate ?? false)) {
       if (isValid(kLineData) && !(notExecuteAction ?? false) && this.hasAction('onCrosshairChange') && isString(this._crosshair.paneId)) {
         this.executeAction('onCrosshairChange', crosshair)
       }
